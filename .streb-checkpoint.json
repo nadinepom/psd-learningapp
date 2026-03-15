@@ -1,0 +1,23 @@
+{
+  "started_at": "2026-03-14T13:23:18.772927+01:00",
+  "last_step": "beads-cli",
+  "completed_steps": {
+    "api-key": true,
+    "beads-cli": true,
+    "claude-code": true,
+    "code-hosting": true,
+    "dolt": true,
+    "git-config": true,
+    "prerequisites": true
+  },
+  "step_results": {
+    "api-key": "sk-7b1J...ZgNw (adesso AI-Hub)",
+    "beads-cli": "v0.58.0",
+    "claude-code": "v2.1.69",
+    "code-hosting": "sk-7b1J...ZgNw (GitHub)",
+    "dolt": "vdolt version 1.83.2\nWarning: you are on an old version of Dolt. The newest version is 1.83.6.\nTo disable this warning, run 'dolt config --global --add versioncheck.disabled true'",
+    "git-config": "nadine.pommerening \u003cnadine.pommerening@adesso.de\u003e",
+    "prerequisites": "12/12 checks passed"
+  },
+  "directory": "/Users/nadine.pommerening/adesso/psd-learningapp"
+}
