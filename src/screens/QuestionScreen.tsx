@@ -62,7 +62,7 @@ export const QuestionScreen = () => {
     const newResults = [...batchResults, correct];
 
     if (newResults.length === batchSize || currentIndex === total - 1) {
-      markResults(newQuestions, newResults);
+      markResults(newQuestions, newResults, reviewMode);
       setBatchQuestions(newQuestions);
       setBatchResults(newResults);
       setShowResult(true);
@@ -77,6 +77,10 @@ export const QuestionScreen = () => {
 
   const handleContinueAfterResult = () => {
     stopReview();
+    if (reviewMode) {
+      router.replace('/');
+      return;
+    }
     setShowResult(false);
     setBatchQuestions([]);
     setBatchResults([]);
@@ -86,6 +90,13 @@ export const QuestionScreen = () => {
   };
 
   const handleClose = () => {
+    if (reviewMode) {
+      markResults(batchQuestions, batchResults, true);
+      setBatchQuestions((prev) => [...prev]);
+      setBatchResults((prev) => [...prev]);
+      setShowResult(true);
+      return;
+    }
     stopReview();
     pauseTraining(question.question);
     router.replace('/');
@@ -117,6 +128,7 @@ export const QuestionScreen = () => {
           correctCount={correctCount}
           total={batchResults.length}
           incorrectCount={incorrectCount}
+          isReview={reviewMode}
           onContinue={handleContinueAfterResult}
         />
       </ScreenContainer>

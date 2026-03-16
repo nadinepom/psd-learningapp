@@ -50,14 +50,16 @@ export const HomeScreen = () => {
             <Text style={styles.dialogLine}>
               You've answered <B>{totalAnswered}</B> of <B>{TOTAL_QUESTIONS}</B> questions so far.
             </Text>
-            <Text style={[styles.dialogLine, styles.dialogLineSpacing]}>
-              <B>{totalCorrect}</B> were correct. Keep it up! 👍
-            </Text>
+            {totalCorrect > 0 && (
+              <Text style={[styles.dialogLine, styles.dialogLineSpacing]}>
+                Keep it up — you've already got <B>{totalCorrect}</B> correct {totalCorrect === 1 ? 'answer' : 'answers'}! 👍 
+              </Text>
+            )}
           </Dialog.Content>
 
           <Dialog.Actions style={styles.dialogActions}>
+            {incorrectQuestions.length > 0 && (
             <Button
-              disabled={incorrectQuestions.length === 0}
               onPress={() => {
                 setDialogVisible(false);
                 startReview();
@@ -65,6 +67,7 @@ export const HomeScreen = () => {
               }}>
               Review mistakes
             </Button>
+            )}
             <Button
               mode="contained"
               style={styles.letsGoButton}
@@ -105,7 +108,7 @@ export const HomeScreen = () => {
                 textColor="#666"
                 onPress={resetProgress}
                 style={styles.resetButton}>
-                Fortschritt zurücksetzen
+                Reset progress
               </Button>
             </View>
           )}

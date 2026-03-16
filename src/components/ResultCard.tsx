@@ -9,10 +9,16 @@ type Props = {
   total: number;
   incorrectCount: number;
   onContinue: () => void;
+  isReview?: boolean;
 };
 
-export const ResultCard = ({ correctCount, total, incorrectCount, onContinue }: Props) => {
+export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, isReview }: Props) => {
+  const allCorrect = total > 0 && correctCount === total;
   const passed = correctCount > total / 2;
+  const emoji = allCorrect ? '🎉' : (passed ? '😊' : '😢');
+  const message = allCorrect
+    ? 'Perfect! All correct!'
+    : (passed ? 'Great! Keep it up' : "Don't give up. You've got this.");
 
   return (
     <View style={styles.container}>
@@ -24,16 +30,16 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue }: 
       />
 
       <View style={styles.result}>
-        <Text style={styles.emoji}>{passed ? '😊' : '😢'}</Text>
+        <Text style={styles.emoji}>{emoji}</Text>
         <Text variant="titleLarge" style={styles.message}>
-          {passed ? 'Great! Keep it up' : "Don't give up. You've got this."}
+          {message}
         </Text>
         <Text variant="bodyMedium" style={styles.score}>
           {correctCount} / {total} correct
         </Text>
       </View>
 
-      {incorrectCount > 0 && (
+      {!isReview && incorrectCount > 0 && (
         <View style={styles.infoBox}>
           <Text variant="bodyMedium" style={styles.infoText}>
             {incorrectCount} incorrect {incorrectCount === 1 ? 'answer has' : 'answers have'} been saved for review.
@@ -47,7 +53,7 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue }: 
         style={styles.continueButton}
         contentStyle={styles.continueContent}
         labelStyle={styles.continueLabel}>
-        Continue Training
+        {isReview ? 'Close the Training' : 'Continue Training'}
       </Button>
     </View>
   );
@@ -90,7 +96,8 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     borderRadius: 24,
-    alignSelf: 'stretch',
+    alignSelf: 'center',
+    paddingHorizontal: 16,
   },
   continueContent: {
     paddingVertical: 12,

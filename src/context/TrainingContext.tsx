@@ -26,7 +26,7 @@ const defaultData: TrainingData = {
 type TrainingContextValue = TrainingData & {
   isLoaded: boolean;
   reviewMode: boolean;
-  markResults: (questions: Question[], results: boolean[]) => Promise<void>;
+  markResults: (questions: Question[], results: boolean[], isReview?: boolean) => Promise<void>;
   saveIncorrect: (questions: Question[]) => Promise<void>;
   pauseTraining: (questionText: string) => Promise<void>;
   resetProgress: () => Promise<void>;
@@ -53,11 +53,34 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
   };
 
-  const markResults = async (questions: Question[], results: boolean[]) => {
+  const markResults = async (questions: Question[], results: boolean[], isReview?: boolean) => {
+    if (isReview) {
+      // In review mode, remove questions answered correctly and keep only still-incorrect ones.
+      const incorrectByQuestion = new Map(
+        data.incorrectQuestions.map((q) => [q.question, q] as const)
+      );
+
+      questions.forEach((q, i) => {
+        if (results[i]) {
+          incorrectByQuestion.delete(q.question);
+        } else {
+          incorrectByQuestion.set(q.question, q);
+        }
+      });
+
+      await persist({
+        ...data,
+        incorrectQuestions: Array.from(incorrectByQuestion.values()),
+        pendingQuestionText: null,
+      });
+      return;
+    }
+
     const newIncorrect = questions.filter((_, i) => !results[i]);
     const existing = data.incorrectQuestions.map((q) => q.question);
     const deduped = newIncorrect.filter((q) => !existing.includes(q.question));
-    const newData: TrainingData = {
+
+    await persist({
       ...data,
       seenQuestions: [...data.seenQuestions, ...questions.map((q) => q.question)],
       totalAnswered: data.totalAnswered + questions.length,
@@ -65,8 +88,7 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
       incorrectQuestions: [...data.incorrectQuestions, ...deduped],
       hasCompletedFirstTraining: true,
       pendingQuestionText: null,
-    };
-    await persist(newData);
+    });
   };
 
   const pauseTraining = async (questionText: string) => {
