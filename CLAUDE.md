@@ -10,7 +10,6 @@ npm run ios            # Start with iOS simulator
 npm run android        # Start with Android emulator
 npm run web            # Start web version
 npm run lint           # Run ESLint (expo lint)
-npm run reset-project  # Move current app/ to app-example/ and create blank app/
 ```
 
 No test runner is configured yet.

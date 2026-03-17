@@ -5,14 +5,11 @@ import {
   useFonts,
 } from '@expo-google-fonts/fira-sans';
 import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { MD3LightTheme, PaperProvider } from 'react-native-paper';
 
-import { TrainingProvider } from '@/context/TrainingContext';
 import { Fonts } from '@/constants/theme';
-
-SplashScreen.preventAutoHideAsync();
+import { TrainingProvider } from '@/context/TrainingContext';
 
 const theme = {
   ...MD3LightTheme,
@@ -45,11 +42,15 @@ export default function RootLayout() {
     FiraSans_700Bold,
   });
 
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
-
-  if (!loaded) return null;
+  if (!loaded) {
+    return (
+      <PaperProvider theme={theme}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </PaperProvider>
+    );
+  }
 
   return (
     <TrainingProvider>
@@ -59,3 +60,12 @@ export default function RootLayout() {
     </TrainingProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+});
