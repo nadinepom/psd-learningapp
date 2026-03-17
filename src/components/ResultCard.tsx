@@ -89,10 +89,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     borderRadius: 12,
     padding: 16,
+    alignSelf: 'center',
+    maxWidth: 420,
+    width: '90%',
   },
   infoText: {
     fontFamily: Fonts.regular,
     color: '#333',
+    textAlign: 'center',
   },
   continueButton: {
     borderRadius: 24,

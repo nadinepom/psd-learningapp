@@ -59,6 +59,7 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
       const incorrectByQuestion = new Map(
         data.incorrectQuestions.map((q) => [q.question, q] as const)
       );
+      const reviewCorrectCount = results.filter(Boolean).length;
 
       questions.forEach((q, i) => {
         if (results[i]) {
@@ -70,6 +71,7 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
 
       await persist({
         ...data,
+        totalCorrect: data.totalCorrect + reviewCorrectCount,
         incorrectQuestions: Array.from(incorrectByQuestion.values()),
         pendingQuestionText: null,
       });

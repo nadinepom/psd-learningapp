@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Icon, IconButton, Text } from 'react-native-paper';
 
 import { ResultCard } from '@/components/ResultCard';
@@ -8,6 +7,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { Fonts } from '@/constants/theme';
 import { useTraining } from '@/context/TrainingContext';
 import { useQuestions } from '@/hooks/useQuestions';
+import { useQuestionSession } from '@/hooks/useQuestionSession';
 
 const BATCH_SIZE = 10;
 
@@ -15,108 +15,44 @@ export const QuestionScreen = () => {
   const { seenQuestions, incorrectQuestions, reviewMode, pendingQuestionText, markResults, pauseTraining, stopReview } = useTraining();
   const regularQuestions = useQuestions(seenQuestions, pendingQuestionText);
   const questions = reviewMode ? incorrectQuestions : regularQuestions;
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selected, setSelected] = useState<number[]>([]);
-  const [revealed, setRevealed] = useState(false);
-  const [batchQuestions, setBatchQuestions] = useState<typeof questions>([]);
-  const [batchResults, setBatchResults] = useState<boolean[]>([]);
-  const [showResult, setShowResult] = useState(false);
-  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const { width } = useWindowDimensions();
-  const isCompact = width < 600;
-
-  const question = questions[currentIndex];
-  const total = questions.length;
-  const batchSize = reviewMode ? total : BATCH_SIZE;
-
-  const hasWrongAnswer = selected.some((i) => !question?.correct.includes(i));
-
-  useEffect(() => {
-    if (!question) return;
-    const allExpectedSelected = selected.length === question.correct.length;
-    if (allExpectedSelected && hasWrongAnswer && !revealed) {
-      revealTimer.current = setTimeout(() => setRevealed(true), 1500);
-    }
-    return () => {
-      if (revealTimer.current) clearTimeout(revealTimer.current);
-    };
-  }, [selected]);
+  const batchSize = reviewMode ? questions.length : BATCH_SIZE;
+  const {
+    question,
+    total,
+    visibleCounter,
+    selected,
+    revealed,
+    showResult,
+    batchQuestions,
+    batchResults,
+    goNext,
+    continueAfterResult,
+    openResult,
+    toggleOption,
+    canToggleOption,
+    getOptionStyleName,
+    shouldDimOption,
+  } = useQuestionSession({ questions, reviewMode, batchSize, markResults });
 
   if (!question) return null;
 
-  const isAnswerCorrect = () =>
-    selected.length > 0 &&
-    selected.every((i) => question.correct.includes(i)) &&
-    question.correct.every((i) => selected.includes(i));
-
-  const goNext = () => {
-    if (!revealed && !hasWrongAnswer && !isAnswerCorrect() && selected.length > 0) {
-      setRevealed(true);
-      return;
-    }
-
-    const correct = isAnswerCorrect();
-    const newQuestions = [...batchQuestions, question];
-    const newResults = [...batchResults, correct];
-
-    if (newResults.length === batchSize || currentIndex === total - 1) {
-      markResults(newQuestions, newResults, reviewMode);
-      setBatchQuestions(newQuestions);
-      setBatchResults(newResults);
-      setShowResult(true);
-    } else {
-      setBatchQuestions(newQuestions);
-      setBatchResults(newResults);
-      setCurrentIndex((i) => i + 1);
-      setSelected([]);
-      setRevealed(false);
-    }
-  };
-
   const handleContinueAfterResult = () => {
+    const shouldGoHome = continueAfterResult();
     stopReview();
-    if (reviewMode) {
+    if (shouldGoHome) {
       router.replace('/');
-      return;
     }
-    setShowResult(false);
-    setBatchQuestions([]);
-    setBatchResults([]);
-    setCurrentIndex((i) => Math.min(i + 1, total - 1));
-    setSelected([]);
-    setRevealed(false);
   };
 
   const handleClose = () => {
     if (reviewMode) {
       markResults(batchQuestions, batchResults, true);
-      setBatchQuestions((prev) => [...prev]);
-      setBatchResults((prev) => [...prev]);
-      setShowResult(true);
+      openResult();
       return;
     }
     stopReview();
     pauseTraining(question.question);
     router.replace('/');
-  };
-
-  const toggleOption = (index: number) => {
-    setSelected((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
-    setRevealed(false);
-  };
-
-  const getOptionStyle = (index: number) => {
-    if (revealed) {
-      if (question.correct.includes(index)) return styles.optionRevealed;
-      if (selected.includes(index)) return styles.optionWrong;
-      return styles.optionDefault;
-    }
-    if (!selected.includes(index)) return styles.optionDefault;
-    return question.correct.includes(index) ? styles.optionCorrect : styles.optionWrong;
   };
 
   if (showResult) {
@@ -140,7 +76,7 @@ export const QuestionScreen = () => {
       <View style={styles.header}>
         <View style={styles.headerSpacer} />
         <Text variant="labelSmall" style={styles.counter}>
-          {currentIndex + 1} / {batchSize}
+          {visibleCounter} / {batchSize}
         </Text>
         <IconButton icon="close" size={20} onPress={handleClose} style={styles.closeButton} />
       </View>
@@ -157,12 +93,16 @@ export const QuestionScreen = () => {
         {question.options.map((option, index) => {
           const isCorrect = question.correct.includes(index);
           const isSelected = selected.includes(index);
+          const isDisabled = !canToggleOption(index);
+          const styleName = getOptionStyleName(index);
+          const shouldDim = shouldDimOption(index);
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => !revealed && toggleOption(index)}
-              activeOpacity={revealed ? 1 : 0.7}
-              style={[styles.optionItem, getOptionStyle(index)]}>
+              onPress={() => canToggleOption(index) && toggleOption(index)}
+              disabled={isDisabled}
+              activeOpacity={isDisabled ? 1 : 0.7}
+              style={[styles.optionItem, styles[styleName], shouldDim && styles.optionDisabled]}>
               <Icon
                 source={isSelected
                   ? isCorrect ? 'check-circle' : 'close-circle'
@@ -183,7 +123,7 @@ export const QuestionScreen = () => {
           mode="contained"
           onPress={goNext}
           disabled={selected.length === 0}
-          style={[styles.button, isCompact && styles.buttonFullWidth]}>
+          style={styles.button}>
           Continue
         </Button>
       </ScrollView>
@@ -235,11 +175,11 @@ const styles = StyleSheet.create({
   optionCorrect: { backgroundColor: '#c8e6c9' },
   optionWrong: { backgroundColor: '#ffcdd2' },
   optionRevealed: { backgroundColor: '#b2e3f6' },
+  optionDisabled: { opacity: 0.45 },
   optionText: {
     flex: 1,
     fontSize: 15,
     fontFamily: Fonts.regular,
   },
   button: { alignSelf: 'center', marginTop: 32 },
-  buttonFullWidth: { alignSelf: 'stretch' },
 });

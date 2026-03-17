@@ -100,7 +100,11 @@ export const HomeScreen = () => {
 
           {hasCompletedFirstTraining && (
             <View style={styles.progressContainer}>
-              <ProgressBar progress={progress} style={styles.progressBar} />
+              <ProgressBar
+                progress={progress}
+                color="#0b5394"
+                style={[styles.progressBar, styles.progressTrack]}
+              />
               <Text style={styles.progressLabel}>{progressPercent}% von 100%</Text>
               <Button
                 mode="text"
@@ -144,8 +148,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   progressBar: {
+    width: '100%',
+    alignSelf: 'stretch',
     height: 8,
     borderRadius: 4,
+  },
+  progressTrack: {
+    backgroundColor: '#d8ebf5',
   },
   progressLabel: {
     fontFamily: Fonts.regular,
