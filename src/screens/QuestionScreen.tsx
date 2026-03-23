@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Icon, IconButton, Text } from 'react-native-paper';
 
@@ -6,15 +7,34 @@ import { ResultCard } from '@/components/ResultCard';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Fonts } from '@/constants/theme';
 import { useTraining } from '@/context/TrainingContext';
-import { useQuestions } from '@/hooks/useQuestions';
+import { shuffle, useQuestions } from '@/hooks/useQuestions';
 import { useQuestionSession } from '@/hooks/useQuestionSession';
 
 const BATCH_SIZE = 10;
 
+const shuffleQuestions = (questions: ReturnType<typeof useQuestions>) =>
+  shuffle(questions).map((q) => {
+    const shuffledIndices = shuffle(q.options.map((_, i) => i));
+    return {
+      ...q,
+      options: shuffledIndices.map((i) => q.options[i]),
+      correct: q.correct.map((c) => shuffledIndices.indexOf(c)),
+    };
+  });
+
 export const QuestionScreen = () => {
   const { seenQuestions, incorrectQuestions, reviewMode, pendingQuestionText, markResults, pauseTraining, stopReview } = useTraining();
   const regularQuestions = useQuestions(seenQuestions, pendingQuestionText);
-  const questions = reviewMode ? incorrectQuestions : regularQuestions;
+  const [reviewQuestions, setReviewQuestions] = useState(() =>
+    reviewMode ? shuffleQuestions(incorrectQuestions) : []
+  );
+  useEffect(() => {
+    if (reviewMode) {
+      setReviewQuestions(shuffleQuestions(incorrectQuestions));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewMode]);
+  const questions = reviewMode ? reviewQuestions : regularQuestions;
   const batchSize = reviewMode ? questions.length : BATCH_SIZE;
   const {
     question,
@@ -34,8 +54,6 @@ export const QuestionScreen = () => {
     shouldDimOption,
   } = useQuestionSession({ questions, reviewMode, batchSize, markResults });
 
-  if (!question) return null;
-
   const handleContinueAfterResult = () => {
     const shouldGoHome = continueAfterResult();
     stopReview();
@@ -46,12 +64,17 @@ export const QuestionScreen = () => {
 
   const handleClose = () => {
     if (reviewMode) {
+      if (batchResults.length === 0) {
+        stopReview();
+        router.replace('/');
+        return;
+      }
       markResults(batchQuestions, batchResults, true);
       openResult();
       return;
     }
     stopReview();
-    pauseTraining(question.question);
+    pauseTraining(question!.question);
     router.replace('/');
   };
 
@@ -71,6 +94,8 @@ export const QuestionScreen = () => {
     );
   }
 
+  if (!question) return null;
+
   return (
     <ScreenContainer>
       <View style={styles.header}>
@@ -84,10 +109,6 @@ export const QuestionScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text variant="titleLarge" style={styles.question}>
           {question.question}
-        </Text>
-
-        <Text variant="labelSmall" style={styles.selectHint}>
-          Select {question.correct.length} {question.correct.length === 1 ? 'answer' : 'answers'}
         </Text>
 
         {question.options.map((option, index) => {
@@ -122,7 +143,7 @@ export const QuestionScreen = () => {
         <Button
           mode="contained"
           onPress={goNext}
-          disabled={selected.length === 0}
+          disabled={selected.length < question.correct.length}
           style={styles.button}>
           Continue
         </Button>

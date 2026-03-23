@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Button, Dialog, IconButton, Portal, ProgressBar, Text } from 'react-native-paper';
+import { Button, Dialog, IconButton, Portal, Text } from 'react-native-paper';
 
 import { Fonts } from '@/constants/theme';
 import { useTraining } from '@/context/TrainingContext';
@@ -42,6 +42,7 @@ export const HomeScreen = () => {
             <IconButton
               icon="close"
               size={20}
+              style={styles.dialogCloseButton}
               onPress={() => setDialogVisible(false)}
             />
           </View>
@@ -57,7 +58,11 @@ export const HomeScreen = () => {
             )}
           </Dialog.Content>
 
-          <Dialog.Actions style={styles.dialogActions}>
+          <Dialog.Actions
+            style={[
+              styles.dialogActions,
+              incorrectQuestions.length === 0 && styles.dialogActionsCentered,
+            ]}>
             {incorrectQuestions.length > 0 && (
             <Button
               onPress={() => {
@@ -71,6 +76,8 @@ export const HomeScreen = () => {
             <Button
               mode="contained"
               style={styles.letsGoButton}
+              contentStyle={styles.letsGoButtonContent}
+              labelStyle={styles.letsGoButtonLabel}
               onPress={() => {
                 setDialogVisible(false);
                 router.push('/question');
@@ -100,11 +107,9 @@ export const HomeScreen = () => {
 
           {hasCompletedFirstTraining && (
             <View style={styles.progressContainer}>
-              <ProgressBar
-                progress={progress}
-                color="#0b5394"
-                style={[styles.progressBar, styles.progressTrack]}
-              />
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+              </View>
               <Text style={styles.progressLabel}>{progressPercent}% von 100%</Text>
               <Button
                 mode="text"
@@ -141,20 +146,24 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     paddingHorizontal: 24,
     marginTop: 12,
-    gap: 4,
+    gap: 5,
     alignItems: 'center',
   },
   resetButton: {
     marginTop: 4,
   },
-  progressBar: {
-    width: '100%',
+  progressTrack: {
     alignSelf: 'stretch',
     height: 8,
     borderRadius: 4,
-  },
-  progressTrack: {
     backgroundColor: '#d8ebf5',
+    overflow: 'hidden',
+    marginBottom: 14,
+  },
+  progressFill: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0b5394',
   },
   progressLabel: {
     fontFamily: Fonts.regular,
@@ -177,16 +186,21 @@ const styles = StyleSheet.create({
   },
   dialog: {
     alignSelf: 'center',
-    width: 380,
+    width: 340,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   dialogHeader: {
     alignItems: 'flex-end',
-    paddingTop: 4,
+    paddingTop: 0,
     paddingRight: 4,
+  },
+  dialogCloseButton: {
+    marginTop: -8,
   },
   dialogContent: {
     alignItems: 'center',
-    paddingTop: 0,
+    paddingTop: 4,
     paddingHorizontal: 24,
   },
   dialogLine: {
@@ -202,10 +216,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 16,
+  },
+  dialogActionsCentered: {
+    justifyContent: 'center',
   },
   letsGoButton: {
     borderRadius: 24,
-    paddingHorizontal: 8,
+    minWidth: 150,
+  },
+  letsGoButtonContent: {
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+  },
+  letsGoButtonLabel: {
+    fontSize: 16,
+    fontFamily: Fonts.medium,
   },
 });

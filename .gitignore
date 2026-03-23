@@ -32,6 +32,12 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+
+# local AI/tooling state (never commit)
+.claude/
+.streb/
+.streb-checkpoint.json
 
 # typescript
 *.tsbuildinfo
@@ -41,4 +47,3 @@ app-example
 # generated native folders
 /ios
 /android
-.env

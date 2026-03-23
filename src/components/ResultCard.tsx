@@ -14,7 +14,7 @@ type Props = {
 
 export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, isReview }: Props) => {
   const allCorrect = total > 0 && correctCount === total;
-  const passed = correctCount > total / 2;
+  const passed = correctCount >= total / 2;
   const emoji = allCorrect ? '🎉' : (passed ? '😊' : '😢');
   const message = allCorrect
     ? 'Perfect! All correct!'
