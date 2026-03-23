@@ -1,5 +1,9 @@
 # PSD Learning App
 
+<p align="center">
+  <img src="assets/images/icon.png" alt="PSD Learning App Icon" width="180" />
+</p>
+
 A mobile learning app to prepare for the **Professional Scrum Developer (PSD I)** certification exam. Built with React Native and Expo — runs on iOS, Android, and web.
 
 ---
