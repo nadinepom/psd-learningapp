@@ -26,7 +26,18 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "PSD Learning",
+      "shortName": "PSD",
+      "description": "Professional Scrum Developer Lernapp – lerne PSD-Fragen effektiv mit Wiederholung und Lernstandspeicherung.",
+      "themeColor": "#1565C0",
+      "backgroundColor": "#E6F4FE",
+      "lang": "de",
+      "icon": "./assets/images/icon.png",
+      "splash": {
+        "image": "./assets/images/icon.png",
+        "backgroundColor": "#E6F4FE"
+      }
     },
     "plugins": [
       "expo-router",

@@ -1,7 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { signInAnonymously } from 'firebase/auth';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { Question } from '@/hooks/useQuestions';
+import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
 
 const STORAGE_KEY = 'psd_training_data';
 
@@ -26,6 +30,8 @@ const defaultData: TrainingData = {
 type TrainingContextValue = TrainingData & {
   isLoaded: boolean;
   reviewMode: boolean;
+  /** Firebase Anonymous User-ID – zeige sie dem Nutzer als Sicherungscode */
+  cloudUserId: string | null;
   markResults: (questions: Question[], results: boolean[], isReview?: boolean) => Promise<void>;
   saveIncorrect: (questions: Question[]) => Promise<void>;
   pauseTraining: (questionText: string) => Promise<void>;
@@ -40,17 +46,68 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<TrainingData>(defaultData);
   const [isLoaded, setIsLoaded] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [cloudUserId, setCloudUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-      if (raw) setData(JSON.parse(raw));
-      setIsLoaded(true);
-    });
+    const useCloud = isFirebaseConfigured && Platform.OS === 'web' && db && auth;
+
+    if (!useCloud) {
+      // Native oder Firebase nicht konfiguriert: nur AsyncStorage verwenden
+      AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+        if (raw) setData(JSON.parse(raw));
+        setIsLoaded(true);
+      });
+      return;
+    }
+
+    let unsubscribe: (() => void) | null = null;
+
+    (async () => {
+      try {
+        const userCredential = await signInAnonymously(auth!);
+        const uid = userCredential.user.uid;
+        setCloudUserId(uid);
+
+        const docRef = doc(db!, 'progress', uid);
+
+        unsubscribe = onSnapshot(docRef, async (snap) => {
+          if (snap.exists()) {
+            // Firestore-Daten laden (Cloud-Stand)
+            setData(snap.data() as TrainingData);
+          } else {
+            // Neuer Nutzer: prüfe ob lokale Daten vorhanden sind und migriere sie
+            const raw = await AsyncStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              const localData: TrainingData = JSON.parse(raw);
+              await setDoc(docRef, localData);
+              setData(localData);
+            }
+          }
+          setIsLoaded(true);
+        });
+      } catch {
+        // Firebase-Fehler: Fallback auf AsyncStorage
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) setData(JSON.parse(raw));
+        setIsLoaded(true);
+      }
+    })();
+
+    return () => unsubscribe?.();
   }, []);
 
   const persist = async (newData: TrainingData) => {
     setData(newData);
+    // Immer lokal speichern (offline-fähig)
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+
+    // Zusätzlich in Firestore speichern (Cloud-Backup, nur Web)
+    if (isFirebaseConfigured && Platform.OS === 'web' && db && cloudUserId) {
+      const docRef = doc(db, 'progress', cloudUserId);
+      await setDoc(docRef, newData).catch(() => {
+        // Netzwerkfehler still ignorieren – AsyncStorage ist Fallback
+      });
+    }
   };
 
   const markResults = async (questions: Question[], results: boolean[], isReview?: boolean) => {
@@ -112,7 +169,7 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
   const stopReview = () => setReviewMode(false);
 
   return (
-    <TrainingContext.Provider value={{ ...data, isLoaded, reviewMode, markResults, saveIncorrect, pauseTraining, resetProgress, startReview, stopReview }}>
+    <TrainingContext.Provider value={{ ...data, isLoaded, reviewMode, cloudUserId, markResults, saveIncorrect, pauseTraining, resetProgress, startReview, stopReview }}>
       {children}
     </TrainingContext.Provider>
   );

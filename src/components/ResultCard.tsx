@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
-import { Button, IconButton, Text } from 'react-native-paper';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, Text } from 'react-native-paper';
 
 import { Fonts } from '@/constants/theme';
 
@@ -22,12 +22,9 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, is
 
   return (
     <View style={styles.container}>
-      <IconButton
-        icon="close"
-        size={24}
-        style={styles.closeButton}
-        onPress={() => router.replace('/')}
-      />
+      <TouchableOpacity onPress={() => router.replace('/')} style={styles.closeButton}>
+        <Text style={styles.closeText}>✕</Text>
+      </TouchableOpacity>
 
       <View style={styles.result}>
         <Text style={styles.emoji}>{emoji}</Text>
@@ -69,6 +66,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeText: {
+    fontSize: 22,
+    color: '#555',
+    lineHeight: 24,
   },
   result: {
     alignItems: 'center',

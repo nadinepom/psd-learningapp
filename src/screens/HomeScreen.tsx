@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
-import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Button, Dialog, IconButton, Portal, Text } from 'react-native-paper';
+import { Image, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Button, Dialog, Portal, Text } from 'react-native-paper';
 
 import { Fonts } from '@/constants/theme';
 import { useTraining } from '@/context/TrainingContext';
@@ -39,12 +39,9 @@ export const HomeScreen = () => {
           style={styles.dialog}>
 
           <View style={styles.dialogHeader}>
-            <IconButton
-              icon="close"
-              size={20}
-              style={styles.dialogCloseButton}
-              onPress={() => setDialogVisible(false)}
-            />
+            <TouchableOpacity onPress={() => setDialogVisible(false)} style={styles.dialogCloseButton}>
+              <Text style={styles.dialogCloseText}>✕</Text>
+            </TouchableOpacity>
           </View>
 
           <Dialog.Content style={styles.dialogContent}>
@@ -196,7 +193,15 @@ const styles = StyleSheet.create({
     paddingRight: 4,
   },
   dialogCloseButton: {
-    marginTop: -8,
+    marginTop: -4,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dialogCloseText: {
+    fontSize: 20,
+    color: '#555',
+    lineHeight: 22,
   },
   dialogContent: {
     alignItems: 'center',

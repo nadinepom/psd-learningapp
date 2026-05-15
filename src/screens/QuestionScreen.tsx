@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, Icon, IconButton, Text } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 
+import { AppIcon } from '@/components/AppIcon';
 import { ResultCard } from '@/components/ResultCard';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Fonts } from '@/constants/theme';
@@ -103,7 +104,9 @@ export const QuestionScreen = () => {
         <Text variant="labelSmall" style={styles.counter}>
           {visibleCounter} / {batchSize}
         </Text>
-        <IconButton icon="close" size={20} onPress={handleClose} style={styles.closeButton} />
+        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+          <Text style={styles.closeText}>✕</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -124,8 +127,8 @@ export const QuestionScreen = () => {
               disabled={isDisabled}
               activeOpacity={isDisabled ? 1 : 0.7}
               style={[styles.optionItem, styles[styleName], shouldDim && styles.optionDisabled]}>
-              <Icon
-                source={isSelected
+              <AppIcon
+                name={isSelected
                   ? isCorrect ? 'check-circle' : 'close-circle'
                   : revealed && isCorrect ? 'check-circle' : 'checkbox-blank-outline'}
                 size={24}
@@ -168,6 +171,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     margin: 0,
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeText: {
+    fontSize: 20,
+    color: '#555',
+    lineHeight: 22,
   },
   scrollContent: {
     flexGrow: 1,
