@@ -24,8 +24,8 @@ const manifest = {
   description: 'Professional Scrum Developer Lernapp – lerne PSD-Fragen effektiv mit Wiederholung und Lernstandspeicherung.',
   start_url: '/',
   display: 'standalone',
-  background_color: '#E6F4FE',
-  theme_color: '#1565C0',
+  background_color: '#b2e3f6',
+  theme_color: '#b2e3f6',
   orientation: 'portrait',
   lang: 'de',
   icons: [
@@ -45,7 +45,7 @@ const pwaTags = `
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PSD Learning">
-    <meta name="theme-color" content="#1565C0">
+    <meta name="theme-color" content="#b2e3f6">
     <meta name="mobile-web-app-capable" content="yes">`;
 
 for (const file of htmlFiles) {
