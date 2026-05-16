@@ -5,8 +5,7 @@ import { Button, Dialog, Portal, Text } from 'react-native-paper';
 
 import { Fonts } from '@/constants/theme';
 import { useTraining } from '@/context/TrainingContext';
-
-const TOTAL_QUESTIONS = 336;
+import { TOTAL_QUESTIONS } from '@/hooks/useQuestions';
 
 const B = ({ children }: { children: React.ReactNode }) => (
   <Text style={{ fontFamily: Fonts.bold }}>{children}</Text>

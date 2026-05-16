@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import questionsData from '@/data/questions.json';
 
+export const TOTAL_QUESTIONS = (questionsData.questions as { question: string; options: string[]; correct: number[] }[]).length;
+
 export type Question = {
   question: string;
   options: string[];

@@ -54,23 +54,28 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
     if (!useCloud) {
       // Native oder Firebase nicht konfiguriert: nur AsyncStorage verwenden
       AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-        if (raw) setData(JSON.parse(raw));
+        if (raw) {
+          try { setData(JSON.parse(raw)); } catch { /* Daten korrupt – frisch starten */ }
+        }
         setIsLoaded(true);
       });
       return;
     }
 
     let unsubscribe: (() => void) | null = null;
+    let cancelled = false;
 
     (async () => {
       try {
         const userCredential = await signInAnonymously(auth!);
+        if (cancelled) return;
         const uid = userCredential.user.uid;
         setCloudUserId(uid);
 
         const docRef = doc(db!, 'progress', uid);
 
         unsubscribe = onSnapshot(docRef, async (snap) => {
+          if (cancelled) return;
           if (snap.exists()) {
             // Firestore-Daten laden (Cloud-Stand)
             setData(snap.data() as TrainingData);
@@ -78,22 +83,29 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
             // Neuer Nutzer: prüfe ob lokale Daten vorhanden sind und migriere sie
             const raw = await AsyncStorage.getItem(STORAGE_KEY);
             if (raw) {
-              const localData: TrainingData = JSON.parse(raw);
-              await setDoc(docRef, localData);
-              setData(localData);
+              try {
+                const localData: TrainingData = JSON.parse(raw);
+                if (cancelled) return;
+                await setDoc(docRef, localData);
+                if (cancelled) return;
+                setData(localData);
+              } catch { /* Daten korrupt – frisch starten */ }
             }
           }
-          setIsLoaded(true);
+          if (!cancelled) setIsLoaded(true);
         });
       } catch {
+        if (cancelled) return;
         // Firebase-Fehler: Fallback auf AsyncStorage
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setData(JSON.parse(raw));
+        if (raw) {
+          try { setData(JSON.parse(raw)); } catch { /* Daten korrupt – frisch starten */ }
+        }
         setIsLoaded(true);
       }
     })();
 
-    return () => unsubscribe?.();
+    return () => { cancelled = true; unsubscribe?.(); };
   }, []);
 
   const persist = async (newData: TrainingData) => {
