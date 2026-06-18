@@ -89,6 +89,7 @@ EXPO_PUBLIC_FIREBASE_PROJECT_ID=...
 EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=...
 EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 EXPO_PUBLIC_FIREBASE_APP_ID=...
+EXPO_PUBLIC_APP_PASSWORD=...
 ```
 
 6. Deploy Firestore security rules:
@@ -152,8 +153,9 @@ psd-learningapp/
 ├── scripts/
 │   └── pwa-postbuild.js    # Generates manifest.json + injects PWA tags after expo export
 ├── assets/                 # Images, fonts, splash screen
-├── constants/
-│   └── theme.ts            # Colors and font definitions
+└── src/
+    └── constants/
+        └── theme.ts        # Colors and font definitions
 ├── firestore.rules         # Firestore security rules (deploy with firebase CLI)
 ├── firebase.json           # Firebase Hosting + Firestore config
 └── src/data/               # PSD exam questions (JSON + source Markdown)
@@ -169,7 +171,7 @@ This app uses **Expo Router** (file-based routing) with React Native, targeting 
 
 **Routing** — `app/` directory maps directly to routes. The root layout wraps everything in a `Stack` navigator.
 
-**Authentication** — `AuthContext` manages a simple password gate (`psd-learning`). The unlock state is persisted in `AsyncStorage` so the user only needs to enter it once per device/browser.
+**Authentication** — `AuthContext` manages a simple password gate. The password is read from the `EXPO_PUBLIC_APP_PASSWORD` environment variable. The unlock state is persisted in `AsyncStorage` so the user only needs to enter it once per device/browser.
 
 **Training state** — managed via `TrainingContext` (`src/context/TrainingContext.tsx`). Progress is synced to **Firestore** when Firebase is configured, and falls back to local `AsyncStorage` otherwise. It tracks:
 - seen questions
@@ -187,11 +189,9 @@ This app uses **Expo Router** (file-based routing) with React Native, targeting 
 3. After each batch of 10, a `ResultCard` is shown
 4. Incorrect answers are saved; the user can review them from the home screen
 
-**Theming** — light/dark mode via `constants/theme.ts` + `hooks/use-theme-color.ts`. `ThemedText` and `ThemedView` automatically apply the correct colors.
+**Theming** — light/dark mode via `src/constants/theme.ts`. `ThemedText` and `ThemedView` automatically apply the correct colors.
 
-**Icons** — `components/ui/icon-symbol.tsx` abstracts platform differences:
-- iOS: native SF Symbols via `expo-symbols`
-- Android/web: Material Icons via `@expo/vector-icons`
+**Icons** — `@expo/vector-icons` (MaterialCommunityIcons) is used across all platforms.
 
 ### Path Aliases
 
@@ -224,6 +224,5 @@ The Scrum PSD exam questions used in this app are based on the repository by **D
 
 ## Notes
 
-- No test runner is configured yet.
 - The new React Native architecture is enabled (`newArchEnabled: true`).
 - The React Compiler is enabled (`reactCompiler: true`).
