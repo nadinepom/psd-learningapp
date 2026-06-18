@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-// Passwort hier ändern – wird einmalig pro Gerät/Browser abgefragt
-const APP_PASSWORD = 'psd-learning';
+// Password is read from the .env file (EXPO_PUBLIC_APP_PASSWORD)
+const APP_PASSWORD = process.env.EXPO_PUBLIC_APP_PASSWORD ?? '';
 const STORAGE_KEY = 'psd_authenticated';
 
 type AuthContextValue = {

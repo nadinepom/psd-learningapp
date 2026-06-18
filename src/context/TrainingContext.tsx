@@ -52,10 +52,10 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
     const useCloud = isFirebaseConfigured && Platform.OS === 'web' && db && auth;
 
     if (!useCloud) {
-      // Native oder Firebase nicht konfiguriert: nur AsyncStorage verwenden
+      // Native or Firebase not configured: use AsyncStorage only
       AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
         if (raw) {
-          try { setData(JSON.parse(raw)); } catch { /* Daten korrupt – frisch starten */ }
+          try { setData(JSON.parse(raw)); } catch { /* Corrupt data: reset to defaults. Acceptable data loss risk for this use case. */ }
         }
         setIsLoaded(true);
       });
@@ -77,10 +77,10 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
         unsubscribe = onSnapshot(docRef, async (snap) => {
           if (cancelled) return;
           if (snap.exists()) {
-            // Firestore-Daten laden (Cloud-Stand)
+            // Load data from Firestore (cloud state)
             setData(snap.data() as TrainingData);
           } else {
-            // Neuer Nutzer: prüfe ob lokale Daten vorhanden sind und migriere sie
+            // New user: check for existing local data and migrate to Firestore
             const raw = await AsyncStorage.getItem(STORAGE_KEY);
             if (raw) {
               try {
@@ -89,17 +89,17 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
                 await setDoc(docRef, localData);
                 if (cancelled) return;
                 setData(localData);
-              } catch { /* Daten korrupt – frisch starten */ }
+              } catch { /* Corrupt data: reset to defaults. Acceptable data loss risk for this use case. */ }
             }
           }
           if (!cancelled) setIsLoaded(true);
         });
       } catch {
         if (cancelled) return;
-        // Firebase-Fehler: Fallback auf AsyncStorage
+        // Firebase error: fall back to AsyncStorage
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
-          try { setData(JSON.parse(raw)); } catch { /* Daten korrupt – frisch starten */ }
+          try { setData(JSON.parse(raw)); } catch { /* Corrupt data: reset to defaults. Acceptable data loss risk for this use case. */ }
         }
         setIsLoaded(true);
       }
@@ -110,14 +110,14 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
 
   const persist = async (newData: TrainingData) => {
     setData(newData);
-    // Immer lokal speichern (offline-fähig)
+    // Always persist locally (offline support)
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
 
-    // Zusätzlich in Firestore speichern (Cloud-Backup, nur Web)
+    // Additionally write to Firestore (cloud backup, web only)
     if (isFirebaseConfigured && Platform.OS === 'web' && db && cloudUserId) {
       const docRef = doc(db, 'progress', cloudUserId);
       await setDoc(docRef, newData).catch(() => {
-        // Netzwerkfehler still ignorieren – AsyncStorage ist Fallback
+        // Silently ignore network errors — AsyncStorage is the fallback
       });
     }
   };
