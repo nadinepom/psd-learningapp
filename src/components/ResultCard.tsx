@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 
-import { Fonts } from '@/constants/theme';
+import { AppIcon } from '@/components/AppIcon';
+import { Colors, Fonts, Layout } from '@/constants/theme';
 
 type Props = {
   correctCount: number;
@@ -15,43 +16,61 @@ type Props = {
 export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, isReview }: Props) => {
   const allCorrect = total > 0 && correctCount === total;
   const passed = correctCount >= total / 2;
-  const emoji = allCorrect ? '🎉' : (passed ? '😊' : '😢');
+  const resultIcon = allCorrect
+    ? 'trophy-outline' as const
+    : (passed ? 'check-decagram-outline' as const : 'lightbulb-on-outline' as const);
   const message = allCorrect
-    ? 'Perfect! All correct!'
-    : (passed ? 'Great! Keep it up' : "Don't give up. You've got this.");
+    ? 'Perfekt – alles richtig!'
+    : (passed ? 'Starke Runde!' : 'Bleib dran – du schaffst das.');
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.replace('/')} style={styles.closeButton}>
-        <Text style={styles.closeText}>✕</Text>
-      </TouchableOpacity>
+      <View style={styles.card}>
+        <TouchableOpacity onPress={() => router.replace('/')} style={styles.closeButton}>
+          <AppIcon name="close" size={19} color={Colors.textMuted} />
+        </TouchableOpacity>
 
-      <View style={styles.result}>
-        <Text style={styles.emoji}>{emoji}</Text>
-        <Text variant="titleLarge" style={styles.message}>
-          {message}
-        </Text>
-        <Text variant="bodyMedium" style={styles.score}>
-          {correctCount} / {total} correct
-        </Text>
-      </View>
-
-      {!isReview && incorrectCount > 0 && (
-        <View style={styles.infoBox}>
-          <Text variant="bodyMedium" style={styles.infoText}>
-            {incorrectCount} incorrect {incorrectCount === 1 ? 'answer has' : 'answers have'} been saved for review.
+        <View style={styles.result}>
+          <View style={styles.resultIconBadge}>
+            <AppIcon name={resultIcon} size={48} color={Colors.primary} />
+          </View>
+          <Text style={styles.eyebrow}>RUNDE ABGESCHLOSSEN</Text>
+          <Text variant="headlineSmall" style={styles.message}>
+            {message}
           </Text>
+          <View style={styles.scorePill}>
+            <Text style={styles.scoreValue}>{correctCount} / {total}</Text>
+            <Text style={styles.scoreLabel}>richtig beantwortet</Text>
+          </View>
         </View>
-      )}
 
-      <Button
-        mode="contained"
-        onPress={onContinue}
-        style={styles.continueButton}
-        contentStyle={styles.continueContent}
-        labelStyle={styles.continueLabel}>
-        {isReview ? 'Close the Training' : 'Continue Training'}
-      </Button>
+        {!isReview && incorrectCount > 0 && (
+          <View style={styles.infoBox}>
+            <View style={styles.infoDot} />
+            <Text variant="bodyMedium" style={styles.infoText}>
+              {incorrectCount === 1
+                ? 'Eine Antwort für die Wiederholung gespeichert.'
+                : `${incorrectCount} Antworten für die Wiederholung gespeichert.`}
+            </Text>
+          </View>
+        )}
+
+        <Button
+          mode="contained"
+          onPress={onContinue}
+          icon={({ size, color }) => (
+            <AppIcon
+              name={isReview ? 'home-outline' : 'arrow-right'}
+              size={size}
+              color={color}
+            />
+          )}
+          style={styles.continueButton}
+          contentStyle={styles.continueContent}
+          labelStyle={styles.continueLabel}>
+          {isReview ? 'Training beenden' : 'Weiter trainieren'}
+        </Button>
+      </View>
     </View>
   );
 };
@@ -60,60 +79,113 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    gap: 24,
+  },
+  card: {
+    boxSizing: 'border-box',
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 620,
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 28,
+    paddingHorizontal: 28,
+    paddingTop: 48,
+    paddingBottom: 28,
   },
   closeButton: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    padding: 8,
+    top: 16,
+    right: 16,
+    width: Layout.minTouchTarget,
+    height: Layout.minTouchTarget,
+    borderRadius: Layout.minTouchTarget / 2,
+    backgroundColor: Colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeText: {
-    fontSize: 22,
-    color: '#555',
-    lineHeight: 24,
-  },
   result: {
     alignItems: 'center',
-    gap: 12,
   },
-  emoji: {
-    fontSize: 72,
+  resultIconBadge: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primarySoft,
+    marginBottom: 20,
+  },
+  eyebrow: {
+    color: Colors.primary,
+    fontFamily: Fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1.3,
+    marginBottom: 8,
   },
   message: {
     textAlign: 'center',
     fontFamily: Fonts.bold,
+    color: Colors.text,
+    letterSpacing: -0.35,
   },
-  score: {
-    opacity: 0.6,
+  scorePill: {
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 18,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginTop: 20,
+  },
+  scoreValue: {
+    color: Colors.text,
+    fontFamily: Fonts.monoBold,
+    fontSize: 22,
+  },
+  scoreLabel: {
+    color: Colors.textMuted,
     fontFamily: Fonts.regular,
+    fontSize: 12,
+    marginTop: 2,
   },
   infoBox: {
-    backgroundColor: '#e0e0e0',
-    borderRadius: 12,
-    padding: 16,
+    boxSizing: 'border-box',
     alignSelf: 'center',
+    width: '100%',
     maxWidth: 420,
-    width: '90%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.infoSoft,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 24,
+  },
+  infoDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.accent,
   },
   infoText: {
+    flex: 1,
     fontFamily: Fonts.regular,
-    color: '#333',
-    textAlign: 'center',
+    color: Colors.text,
+    lineHeight: 20,
   },
   continueButton: {
-    borderRadius: 24,
     alignSelf: 'center',
-    paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: Layout.actionMaxWidth,
+    borderRadius: 16,
+    marginTop: 24,
   },
   continueContent: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    minHeight: Layout.controlHeight,
   },
   continueLabel: {
-    fontSize: 18,
-    color: '#fff',
+    fontSize: 16,
+    color: Colors.white,
+    fontFamily: Fonts.medium,
   },
 });

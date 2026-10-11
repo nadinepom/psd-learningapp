@@ -9,12 +9,20 @@ const fs = require('fs');
 const path = require('path');
 
 const distDir = path.join(__dirname, '../dist');
-const iconSrc = path.join(__dirname, '../assets/images/icon.png');
+const iconAssets = [
+  ['apple-touch-icon.png', 'apple-touch-icon.png'],
+  ['icon-192.png', 'icon-192.png'],
+  ['icon-512.png', 'icon-512.png'],
+  ['icon-maskable-512.png', 'icon-maskable-512.png'],
+];
 
-// 1. Icon zu festen Pfaden kopieren
-fs.copyFileSync(iconSrc, path.join(distDir, 'apple-touch-icon.png'));
-fs.copyFileSync(iconSrc, path.join(distDir, 'icon-512.png'));
-fs.copyFileSync(iconSrc, path.join(distDir, 'icon-192.png'));
+// 1. Icons in den jeweils tatsächlich deklarierten Größen kopieren
+for (const [sourceName, targetName] of iconAssets) {
+  fs.copyFileSync(
+    path.join(__dirname, `../assets/images/${sourceName}`),
+    path.join(distDir, targetName)
+  );
+}
 console.log('✓ Icons kopiert');
 
 // 2. manifest.json erstellen
@@ -29,9 +37,9 @@ const manifest = {
   orientation: 'portrait',
   lang: 'de',
   icons: [
-    { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-    { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
-    { src: '/apple-touch-icon.png', sizes: '1024x1024', type: 'image/png' },
+    { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
   ],
 };
 fs.writeFileSync(path.join(distDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
@@ -55,9 +63,9 @@ for (const file of htmlFiles) {
   // viewport-fit=cover ergänzen falls noch nicht vorhanden
   html = html.replace(
     /(<meta name="viewport" content="[^"]*)"(\s*\/>)/,
-    (match, before) => {
+    (match, before, closing) => {
       if (match.includes('viewport-fit')) return match;
-      return `${before}, viewport-fit=cover"$2`;
+      return `${before}, viewport-fit=cover"${closing}`;
     }
   );
 

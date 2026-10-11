@@ -6,7 +6,7 @@ import { Button, Text } from 'react-native-paper';
 import { AppIcon } from '@/components/AppIcon';
 import { ResultCard } from '@/components/ResultCard';
 import { ScreenContainer } from '@/components/ScreenContainer';
-import { Fonts } from '@/constants/theme';
+import { Colors, Fonts, Layout } from '@/constants/theme';
 import { useTraining } from '@/context/TrainingContext';
 import { shuffle, useQuestions } from '@/hooks/useQuestions';
 import { useQuestionSession } from '@/hooks/useQuestionSession';
@@ -39,7 +39,6 @@ export const QuestionScreen = () => {
   const batchSize = reviewMode ? questions.length : BATCH_SIZE;
   const {
     question,
-    total,
     visibleCounter,
     selected,
     revealed,
@@ -97,58 +96,80 @@ export const QuestionScreen = () => {
 
   if (!question) return null;
 
+  const sessionProgress = Math.min(100, Math.round((visibleCounter / batchSize) * 100));
+  const answerCount = question.correct.length;
+
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <View style={styles.headerSpacer} />
-        <Text variant="labelSmall" style={styles.counter}>
-          {visibleCounter} / {batchSize}
+        <Text style={styles.sectionLabel}>
+          {reviewMode ? 'WIEDERHOLUNG' : 'TRAINING'}
+        </Text>
+        <Text style={styles.counter}>
+          Frage {visibleCounter} von {batchSize}
         </Text>
         <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <Text style={styles.closeText}>✕</Text>
+          <AppIcon name="close" size={19} color={Colors.textMuted} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text variant="titleLarge" style={styles.question}>
-          {question.question}
-        </Text>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${sessionProgress}%` }]} />
+      </View>
 
-        {question.options.map((option, index) => {
-          const isCorrect = question.correct.includes(index);
-          const isSelected = selected.includes(index);
-          const isDisabled = !canToggleOption(index);
-          const styleName = getOptionStyleName(index);
-          const shouldDim = shouldDimOption(index);
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => canToggleOption(index) && toggleOption(index)}
-              disabled={isDisabled}
-              activeOpacity={isDisabled ? 1 : 0.7}
-              style={[styles.optionItem, styles[styleName], shouldDim && styles.optionDisabled]}>
-              <AppIcon
-                name={isSelected
-                  ? isCorrect ? 'check-circle' : 'close-circle'
-                  : revealed && isCorrect ? 'check-circle' : 'checkbox-blank-outline'}
-                size={24}
-                color={
-                  revealed && isCorrect ? '#2e7d32'
-                  : isSelected ? (isCorrect ? '#2e7d32' : '#c62828')
-                  : '#666'
-                }
-              />
-              <Text style={styles.optionText}>{option}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.questionCard}>
+          <Text style={styles.questionEyebrow}>DEINE FRAGE</Text>
+          <Text variant="titleLarge" style={styles.question}>
+            {question.question}
+          </Text>
+          <Text style={styles.answerHint}>
+            {answerCount === 1
+              ? 'Wähle eine Antwort aus.'
+              : `Wähle ${answerCount} Antworten aus.`}
+          </Text>
+        </View>
+
+        <View style={styles.optionsList}>
+          {question.options.map((option, index) => {
+            const isCorrect = question.correct.includes(index);
+            const isSelected = selected.includes(index);
+            const isDisabled = !canToggleOption(index);
+            const styleName = getOptionStyleName(index);
+            const shouldDim = shouldDimOption(index);
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => canToggleOption(index) && toggleOption(index)}
+                disabled={isDisabled}
+                activeOpacity={isDisabled ? 1 : 0.72}
+                style={[styles.optionItem, styles[styleName], shouldDim && styles.optionDisabled]}>
+                <AppIcon
+                  name={isSelected
+                    ? isCorrect ? 'check-circle' : 'close-circle'
+                    : revealed && isCorrect ? 'check-circle' : 'checkbox-blank-outline'}
+                  size={24}
+                  color={
+                    revealed && isCorrect ? Colors.success
+                    : isSelected ? (isCorrect ? Colors.success : Colors.danger)
+                    : Colors.textMuted
+                  }
+                />
+                <Text style={styles.optionText}>{option}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         <Button
           mode="contained"
           onPress={goNext}
           disabled={selected.length < question.correct.length}
-          style={styles.button}>
-          Continue
+          icon={({ size, color }) => <AppIcon name="arrow-right" size={size} color={color} />}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}>
+          Weiter
         </Button>
       </ScrollView>
     </ScreenContainer>
@@ -159,59 +180,113 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    minHeight: 44,
   },
-  headerSpacer: {
-    width: 40,
+  sectionLabel: {
+    color: Colors.primary,
+    fontFamily: Fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1.3,
   },
   counter: {
     flex: 1,
     textAlign: 'center',
-    opacity: 0.6,
+    color: Colors.textMuted,
+    fontFamily: Fonts.monoMedium,
+    fontSize: 13,
   },
   closeButton: {
-    margin: 0,
-    padding: 8,
+    width: Layout.minTouchTarget,
+    height: Layout.minTouchTarget,
+    borderRadius: Layout.minTouchTarget / 2,
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeText: {
-    fontSize: 20,
-    color: '#555',
-    lineHeight: 22,
+  progressTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.surfaceMuted,
+    overflow: 'hidden',
+    marginTop: 12,
+  },
+  progressFill: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingVertical: 32,
-    gap: 8,
+    paddingTop: 28,
+    paddingBottom: 20,
+  },
+  questionCard: {
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 18,
+  },
+  questionEyebrow: {
+    color: Colors.accent,
+    fontFamily: Fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    marginBottom: 12,
   },
   question: {
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 28,
+    color: Colors.text,
+    lineHeight: 30,
     fontFamily: Fonts.bold,
+    letterSpacing: -0.25,
   },
-  selectHint: {
-    fontFamily: Fonts.bold,
-    marginBottom: 8,
-    opacity: 0.6,
+  answerHint: {
+    color: Colors.textMuted,
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    marginTop: 16,
+  },
+  optionsList: {
+    gap: 10,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 8,
+    gap: 14,
+    minHeight: 58,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1,
   },
-  optionDefault: { backgroundColor: '#f5f5f5' },
-  optionCorrect: { backgroundColor: '#c8e6c9' },
-  optionWrong: { backgroundColor: '#ffcdd2' },
-  optionRevealed: { backgroundColor: '#b2e3f6' },
+  optionDefault: { backgroundColor: Colors.surface, borderColor: Colors.border },
+  optionCorrect: { backgroundColor: Colors.successSoft, borderColor: '#B9E2CB' },
+  optionWrong: { backgroundColor: Colors.dangerSoft, borderColor: '#F3C4C9' },
+  optionRevealed: { backgroundColor: Colors.infoSoft, borderColor: '#B8DDE8' },
   optionDisabled: { opacity: 0.45 },
   optionText: {
     flex: 1,
-    fontSize: 15,
+    color: Colors.text,
+    fontSize: 15.5,
+    lineHeight: 22,
     fontFamily: Fonts.regular,
   },
-  button: { alignSelf: 'center', marginTop: 32 },
+  button: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: Layout.actionMaxWidth,
+    borderRadius: 16,
+    marginTop: 24,
+  },
+  buttonContent: {
+    minHeight: Layout.controlHeight,
+  },
+  buttonLabel: {
+    color: Colors.white,
+    fontFamily: Fonts.medium,
+    fontSize: 16,
+  },
 });

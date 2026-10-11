@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
 
 import { AppIcon } from '@/components/AppIcon';
-import { Fonts } from '@/constants/theme';
+import { Colors, Fonts, Layout } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 
 export const PasswordScreen = () => {
+  const { width } = useWindowDimensions();
   const { unlock } = useAuth();
   const [password, setPassword] = useState('');
   const [secure, setSecure] = useState(true);
@@ -28,12 +29,19 @@ export const PasswordScreen = () => {
     <KeyboardAvoidingView
       style={styles.outer}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.card}>
-        <Text variant="headlineSmall" style={styles.title}>
-          PSD Learning
-        </Text>
+      <View style={[styles.card, { width: Math.min(420, width - 40) }]}>
+        <View style={styles.logoFrame}>
+          <Image
+            source={require('../../assets/images/icon.png')}
+            style={styles.logo}
+            resizeMode="cover"
+          />
+        </View>
+
+        <Text style={styles.eyebrow}>WILLKOMMEN ZURÜCK</Text>
+        <Text variant="headlineSmall" style={styles.title}>Dein Lernbereich</Text>
         <Text variant="bodyMedium" style={styles.subtitle}>
-          Bitte gib das Passwort ein, um fortzufahren.
+          Gib dein Passwort ein, um dein Training fortzusetzen.
         </Text>
 
         <TextInput
@@ -58,6 +66,9 @@ export const PasswordScreen = () => {
           returnKeyType="done"
           autoCapitalize="none"
           style={styles.input}
+          outlineColor={Colors.border}
+          activeOutlineColor={Colors.primary}
+          textColor={Colors.text}
         />
 
         {error && (
@@ -72,7 +83,8 @@ export const PasswordScreen = () => {
           loading={loading}
           disabled={loading || password.length === 0}
           style={styles.button}
-          contentStyle={styles.buttonContent}>
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}>
           Entsperren
         </Button>
       </View>
@@ -85,46 +97,81 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E6F4FE',
-    padding: 24,
+    backgroundColor: Colors.background,
+    padding: 20,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    boxSizing: 'border-box',
+    alignItems: 'stretch',
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 24,
     padding: 32,
+    maxWidth: 420,
+    shadowColor: Colors.primaryDark,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.07,
+    shadowRadius: 30,
+    elevation: 3,
+  },
+  logoFrame: {
+    alignSelf: 'center',
+    width: 88,
+    height: 88,
+    borderRadius: 22,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  logo: {
     width: '100%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    height: '100%',
+  },
+  eyebrow: {
+    color: Colors.primary,
+    fontFamily: Fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   title: {
     fontFamily: Fonts.bold,
-    marginBottom: 8,
     textAlign: 'center',
-    color: '#0250b0',
+    color: Colors.text,
+    fontSize: 26,
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontFamily: Fonts.regular,
     textAlign: 'center',
-    color: '#555',
-    marginBottom: 24,
+    color: Colors.textMuted,
+    lineHeight: 21,
+    marginTop: 10,
+    marginBottom: 28,
   },
   input: {
-    marginBottom: 8,
+    backgroundColor: Colors.surface,
+    marginBottom: 6,
   },
   errorText: {
-    color: '#c0392b',
+    color: Colors.danger,
     marginBottom: 8,
     fontFamily: Fonts.regular,
   },
   button: {
-    marginTop: 16,
-    borderRadius: 8,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: Layout.actionMaxWidth,
+    marginTop: 18,
+    borderRadius: 16,
   },
   buttonContent: {
-    paddingVertical: 4,
+    minHeight: Layout.controlHeight,
+  },
+  buttonLabel: {
+    color: Colors.white,
+    fontFamily: Fonts.medium,
+    fontSize: 16,
   },
 });

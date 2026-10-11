@@ -18,14 +18,14 @@ A mobile learning app to prepare for the **Professional Scrum Developer (PSD I)*
 - **Cloud sync** — progress is saved to **Firebase Firestore** (anonymous auth) and synced across devices
 - **Password protection** — simple one-time password gate before accessing the app
 - **PWA support** — installable on mobile and desktop via browser (standalone mode, app icon, offline-ready shell)
-- **Light & dark mode** support
+- **Calm responsive interface** — white surfaces, generous spacing, accessible contrast, and mobile-friendly layouts
 
 ---
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 18
-- [Expo CLI](https://docs.expo.dev/get-started/installation/) (`npm install -g expo-cli`)
+- Expo CLI is included with the project dependencies; no global installation is required.
 - For iOS: Xcode + iOS Simulator
 - For Android: Android Studio + Android Emulator
 - For Firebase features: a Firebase project (see [Firebase Setup](#firebase-setup) below)
@@ -46,6 +46,7 @@ npm start
 ```
 
 In the terminal output, press:
+
 - `i` — open iOS Simulator
 - `a` — open Android Emulator
 - `w` — open in browser
@@ -54,22 +55,23 @@ In the terminal output, press:
 
 ## Available Scripts
 
-| Command              | Description                                      |
-|----------------------|--------------------------------------------------|
-| `npm start`          | Start Expo dev server (interactive)              |
-| `npm run ios`        | Build and run on iOS Simulator                   |
-| `npm run android`    | Build and run on Android Emulator                |
-| `npm run web`        | Start web version in browser                     |
-| `npm run build:web`  | Export static web build + apply PWA post-processing |
-| `npm run deploy`     | Build for web and deploy to Firebase Hosting     |
-| `npm run lint`       | Run ESLint                                       |
-| `npm test`           | Run unit tests (Jest)                            |
+| Command             | Description                                         |
+| ------------------- | --------------------------------------------------- |
+| `npm start`         | Start Expo dev server (interactive)                 |
+| `npm run ios`       | Build and run on iOS Simulator                      |
+| `npm run android`   | Build and run on Android Emulator                   |
+| `npm run web`       | Start web version in browser                        |
+| `npm run build:web` | Export static web build + apply PWA post-processing |
+| `npm run deploy`    | Build for web and deploy to Firebase Hosting        |
+| `npm run lint`      | Run ESLint                                          |
+| `npm test`          | Run unit tests (Jest)                               |
 
 ---
 
 ## Firebase Setup
 
 This app uses Firebase for:
+
 - **Anonymous Authentication** — each user gets a unique ID without registration
 - **Firestore** — stores learning progress per user (`/progress/{userId}`)
 - **Firebase Hosting** — serves the PWA
@@ -120,10 +122,10 @@ Unit tests cover the core business logic. UI components and Firebase integration
 npm test
 ```
 
-| Test file | What is tested |
-|---|---|
-| `src/hooks/__tests__/shuffle.test.ts` | `shuffle` — length, element preservation, no mutation |
-| `src/hooks/__tests__/useQuestions.test.ts` | Question filtering (seen exclusion, < 10 fallback, `pendingQuestion` ordering) |
+| Test file                                        | What is tested                                                                                            |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `src/hooks/__tests__/shuffle.test.ts`            | `shuffle` — length, element preservation, no mutation                                                     |
+| `src/hooks/__tests__/useQuestions.test.ts`       | Question filtering (seen exclusion, < 10 fallback, `pendingQuestion` ordering)                            |
 | `src/hooks/__tests__/useQuestionSession.test.ts` | Option selection, reveal logic, batch accumulation, `markResults` flags, auto-reveal timer, option styles |
 
 **Stack:** [jest-expo](https://github.com/expo/expo/tree/main/packages/jest-expo) + [@testing-library/react-native](https://testing-library.com/docs/react-native-testing-library/intro/)
@@ -174,6 +176,7 @@ This app uses **Expo Router** (file-based routing) with React Native, targeting 
 **Authentication** — `AuthContext` manages a simple password gate. The password is read from the `EXPO_PUBLIC_APP_PASSWORD` environment variable. The unlock state is persisted in `AsyncStorage` so the user only needs to enter it once per device/browser.
 
 **Training state** — managed via `TrainingContext` (`src/context/TrainingContext.tsx`). Progress is synced to **Firestore** when Firebase is configured, and falls back to local `AsyncStorage` otherwise. It tracks:
+
 - seen questions
 - incorrect questions
 - current question (resume on relaunch)
@@ -184,14 +187,19 @@ This app uses **Expo Router** (file-based routing) with React Native, targeting 
 **Firestore rules** — each user can only read/write their own document at `/progress/{userId}`. Unauthenticated access is denied.
 
 **Question flow**
+
 1. `useQuestions` loads and filters questions (excludes already-seen ones)
 2. `useQuestionSession` manages the current batch: selection state, reveal logic, result accumulation
 3. After each batch of 10, a `ResultCard` is shown
 4. Incorrect answers are saved; the user can review them from the home screen
 
-**Theming** — light/dark mode via `src/constants/theme.ts`. `ThemedText` and `ThemedView` automatically apply the correct colors.
+**Theming** — shared color and typography tokens live in `src/constants/theme.ts`. The current React Native Paper provider uses a customized `MD3LightTheme`. Montserrat is used for readable learning content, headings, and controls; Roboto Mono is reserved for progress values, counters, and small orientation labels. The visual system favors a near-white background, white cards, subtle borders, restrained blue/cyan accents, and soft semantic colors for correct and incorrect answers.
 
-**Icons** — `@expo/vector-icons` (MaterialCommunityIcons) is used across all platforms.
+**Interface flow** — the home screen presents progress and accuracy in a compact status card. Actions follow a mobile-first rule: they use the available safe width on small screens and are centered with a 300 px maximum on larger layouts. Icon-only controls keep at least a 44×44 px touch target. Questions use a clear progress indicator, a focused white question card, and bordered answer cards. The password and result screens use the same spacing, radius, and surface language; secondary result information stays in a narrower centered panel so it does not compete with the score.
+
+**Icons** — `@expo/vector-icons` (MaterialCommunityIcons) is loaded once in the root layout and rendered through the shared `AppIcon` wrapper on web, iOS, and Android. Navigation, answer states, password visibility, actions, and results use the same vector-icon source instead of platform-specific text glyphs or emoji.
+
+**App icon** — `assets/images/icon.png` is the opaque 1024×1024 primary icon used by iOS, the web configuration, the splash screen, and the home screen. Android uses the safe-area-padded `adaptive-icon.png`. The PWA build copies correctly sized 192×192, 512×512, maskable, and Apple Touch variants from `assets/images/`.
 
 ### Path Aliases
 
@@ -201,16 +209,18 @@ This app uses **Expo Router** (file-based routing) with React Native, targeting 
 
 ## Key Dependencies
 
-| Package                     | Purpose                                 |
-|-----------------------------|-----------------------------------------|
-| `expo-router`               | File-based navigation                   |
-| `firebase`                  | Auth (anonymous) + Firestore progress sync |
-| `react-native-paper`        | Material Design UI components           |
-| `react-native-reanimated`   | Animations                              |
-| `expo-image`                | Optimized image component               |
-| `@react-native-async-storage/async-storage` | Persistent progress storage |
-| `beads-ui`                  | Additional UI component library         |
-| `@expo-google-fonts/fira-sans` | Custom font                          |
+| Package                                     | Purpose                                    |
+| ------------------------------------------- | ------------------------------------------ |
+| `expo-router`                               | File-based navigation                      |
+| `@expo/vector-icons`                        | Cross-platform Material Community Icons    |
+| `firebase`                                  | Auth (anonymous) + Firestore progress sync |
+| `react-native-paper`                        | Material Design UI components              |
+| `react-native-reanimated`                   | Animations                                 |
+| `expo-image`                                | Optimized image component                  |
+| `@react-native-async-storage/async-storage` | Persistent progress storage                |
+| `beads-ui`                                  | Additional UI component library            |
+| `@expo-google-fonts/montserrat`             | Primary UI and learning-content font       |
+| `@expo-google-fonts/roboto-mono`            | Progress, counters, and metadata font      |
 
 ---
 
@@ -226,3 +236,4 @@ The Scrum PSD exam questions used in this app are based on the repository by **D
 
 - The new React Native architecture is enabled (`newArchEnabled: true`).
 - The React Compiler is enabled (`reactCompiler: true`).
+- Keep this README and `AGENTS.md` synchronized with project changes. Update them whenever behavior, architecture, setup, commands, dependencies, assets, testing, or deployment changes.

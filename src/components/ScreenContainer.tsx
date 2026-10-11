@@ -1,5 +1,7 @@
 import { useWindowDimensions, StyleSheet, View, ViewProps } from 'react-native';
 
+import { Colors } from '@/constants/theme';
+
 const COMPACT_BREAKPOINT = 600;
 
 export const ScreenContainer = ({ style, ...props }: ViewProps) => {
@@ -21,18 +23,19 @@ export const ScreenContainer = ({ style, ...props }: ViewProps) => {
 const styles = StyleSheet.create({
   base: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   compact: {
-    marginHorizontal: 24,
-    marginTop: 48,
-    marginBottom: 68,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 32,
   },
   regular: {
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 800,
-    marginTop: 64,
-    marginBottom: 80,
+    maxWidth: 760,
+    paddingTop: 40,
+    paddingBottom: 56,
     paddingHorizontal: 48,
   },
 });
