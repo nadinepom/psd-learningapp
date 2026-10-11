@@ -85,7 +85,7 @@ Cloud persistence is web-only. It signs in anonymously, stores one document at `
 - Use the `@/` alias for imports from `src/`; it maps to `./src/*`, not the repository root.
 - Reuse theme values and shared components before adding screen-local duplicates.
 - The current Paper provider uses `MD3LightTheme`; do not assume dark mode is implemented merely because `userInterfaceStyle` is `automatic` in `app.json`.
-- Use `MaterialCommunityIcons` through `AppIcon` for interface icons on every platform. The icon font is loaded in `app/_layout.tsx` and works on web, iOS, and Android. Prefer a meaningful library glyph over Unicode symbols, emoji, or screen-specific SVG implementations; verify new glyph names against the installed MaterialCommunityIcons map.
+- Use `AppIcon` for interface icons on every platform. Native iOS/Android render MaterialCommunityIcons and load its font in `app/_layout.tsx`; web renders the explicitly supported names as inline SVG in `AppIcon` so static deployments do not depend on serving an icon font. When adding an icon name, add and visually verify its web SVG case as well as verifying the MaterialCommunityIcons native glyph. Prefer these shared meaningful icons over Unicode symbols, emoji, or screen-local icon implementations.
 - Keep the interface, navigation, feedback, accessibility labels, and app/PWA metadata in English. German is only the optional secondary language inside bilingual learning explanations.
 
 ### Visual design system

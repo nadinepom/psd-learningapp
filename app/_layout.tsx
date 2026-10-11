@@ -14,7 +14,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { MD3LightTheme, MD3Theme, PaperProvider } from 'react-native-paper';
 
 import { Colors, Fonts } from '@/constants/theme';
@@ -65,7 +65,7 @@ export default function RootLayout() {
     RobotoMono_400Regular,
     RobotoMono_500Medium,
     RobotoMono_700Bold,
-    ...MaterialCommunityIcons.font,
+    ...(Platform.OS === 'web' ? {} : MaterialCommunityIcons.font),
   });
 
   useEffect(() => {
