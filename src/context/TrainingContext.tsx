@@ -32,7 +32,12 @@ type TrainingContextValue = TrainingData & {
   reviewMode: boolean;
   /** Firebase Anonymous User-ID – zeige sie dem Nutzer als Sicherungscode */
   cloudUserId: string | null;
-  markResults: (questions: Question[], results: boolean[], isReview?: boolean) => Promise<void>;
+  markResults: (
+    questions: Question[],
+    results: boolean[],
+    isReview?: boolean,
+    pendingQuestionText?: string | null
+  ) => Promise<void>;
   saveIncorrect: (questions: Question[]) => Promise<void>;
   pauseTraining: (questionText: string) => Promise<void>;
   resetProgress: () => Promise<void>;
@@ -122,7 +127,12 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const markResults = async (questions: Question[], results: boolean[], isReview?: boolean) => {
+  const markResults = async (
+    questions: Question[],
+    results: boolean[],
+    isReview?: boolean,
+    pendingQuestionText: string | null = null
+  ) => {
     if (isReview) {
       // In review mode, remove questions answered correctly and keep only still-incorrect ones.
       const incorrectByQuestion = new Map(
@@ -158,7 +168,7 @@ export const TrainingProvider = ({ children }: { children: ReactNode }) => {
       totalCorrect: data.totalCorrect + results.filter(Boolean).length,
       incorrectQuestions: [...data.incorrectQuestions, ...deduped],
       hasCompletedFirstTraining: true,
-      pendingQuestionText: null,
+      pendingQuestionText,
     });
   };
 

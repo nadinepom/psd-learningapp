@@ -52,18 +52,18 @@ export const HomeScreen = () => {
 
         <Text style={styles.eyebrow}>PSD LEARNING</Text>
         <Text variant="headlineMedium" style={styles.title}>
-          Lerne fokussiert.{`\n`}Bestehe sicher.
+          Learn with focus.{`\n`}Pass with confidence.
         </Text>
         <Text variant="bodyLarge" style={styles.subtitle}>
-          Kurze Trainingseinheiten, klare Rückmeldungen und gezielte Wiederholungen.
+          Short practice sessions, clear feedback, and focused review.
         </Text>
 
         {hasCompletedFirstTraining ? (
           <View style={styles.progressCard}>
             <View style={styles.progressHeader}>
               <View>
-                <Text style={styles.cardEyebrow}>DEIN FORTSCHRITT</Text>
-                <Text style={styles.cardTitle}>{totalAnswered} Fragen beantwortet</Text>
+                <Text style={styles.cardEyebrow}>YOUR PROGRESS</Text>
+                <Text style={styles.cardTitle}>{totalAnswered} questions answered</Text>
               </View>
               <Text style={styles.progressPercent}>{progressPercent}%</Text>
             </View>
@@ -75,12 +75,12 @@ export const HomeScreen = () => {
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{accuracyPercent}%</Text>
-                <Text style={styles.statLabel}>Trefferquote</Text>
+                <Text style={styles.statLabel}>Accuracy</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{incorrectQuestions.length}</Text>
-                <Text style={styles.statLabel}>Zu wiederholen</Text>
+                <Text style={styles.statLabel}>To review</Text>
               </View>
             </View>
           </View>
@@ -88,7 +88,7 @@ export const HomeScreen = () => {
           <View style={styles.infoCard}>
             <View style={styles.infoDot} />
             <Text style={styles.infoText}>
-              10 Fragen pro Runde · Fortschritt wird automatisch gespeichert
+              10 questions per round · Progress is saved automatically
             </Text>
           </View>
         )}
@@ -101,7 +101,7 @@ export const HomeScreen = () => {
             style={styles.primaryButton}
             contentStyle={styles.buttonContent}
             labelStyle={styles.primaryLabel}>
-            {hasCompletedFirstTraining ? 'Training fortsetzen' : 'Training starten'}
+            {hasCompletedFirstTraining ? 'Continue training' : 'Start training'}
           </Button>
 
           {incorrectQuestions.length > 0 && (
@@ -112,7 +112,7 @@ export const HomeScreen = () => {
               style={styles.secondaryButton}
               contentStyle={styles.secondaryButtonContent}
               labelStyle={styles.secondaryLabel}>
-              Fehler wiederholen
+              Review mistakes
             </Button>
           )}
 
@@ -125,7 +125,7 @@ export const HomeScreen = () => {
               icon={({ size, color }) => <AppIcon name="restart" size={size} color={color} />}
               style={styles.resetButton}
               labelStyle={styles.resetLabel}>
-              Fortschritt zurücksetzen
+              Reset progress
             </Button>
           )}
         </View>

@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 
 import { AppIcon } from '@/components/AppIcon';
+import { LearningAidCard } from '@/components/LearningAidCard';
 import { ResultCard } from '@/components/ResultCard';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors, Fonts, Layout } from '@/constants/theme';
@@ -24,6 +25,7 @@ const shuffleQuestions = (questions: ReturnType<typeof useQuestions>) =>
   });
 
 export const QuestionScreen = () => {
+  const scrollRef = useRef<ScrollView>(null);
   const { seenQuestions, incorrectQuestions, reviewMode, pendingQuestionText, markResults, pauseTraining, stopReview } = useTraining();
   const regularQuestions = useQuestions(seenQuestions, pendingQuestionText);
   const [reviewQuestions, setReviewQuestions] = useState(() =>
@@ -42,17 +44,21 @@ export const QuestionScreen = () => {
     visibleCounter,
     selected,
     revealed,
+    currentAnswerCorrect,
     showResult,
-    batchQuestions,
     batchResults,
     goNext,
     continueAfterResult,
-    openResult,
+    getExitSnapshot,
     toggleOption,
     canToggleOption,
     getOptionStyleName,
     shouldDimOption,
   } = useQuestionSession({ questions, reviewMode, batchSize, markResults });
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [question]);
 
   const handleContinueAfterResult = () => {
     const shouldGoHome = continueAfterResult();
@@ -62,19 +68,21 @@ export const QuestionScreen = () => {
     }
   };
 
-  const handleClose = () => {
-    if (reviewMode) {
-      if (batchResults.length === 0) {
-        stopReview();
-        router.replace('/');
-        return;
-      }
-      markResults(batchQuestions, batchResults, true);
-      openResult();
-      return;
+  const handleClose = async () => {
+    const exitSnapshot = getExitSnapshot();
+
+    if (exitSnapshot.questions.length > 0) {
+      await markResults(
+        exitSnapshot.questions,
+        exitSnapshot.results,
+        reviewMode,
+        exitSnapshot.pendingQuestionText
+      );
+    } else if (exitSnapshot.pendingQuestionText) {
+      await pauseTraining(exitSnapshot.pendingQuestionText);
     }
+
     stopReview();
-    pauseTraining(question!.question);
     router.replace('/');
   };
 
@@ -103,12 +111,16 @@ export const QuestionScreen = () => {
     <ScreenContainer>
       <View style={styles.header}>
         <Text style={styles.sectionLabel}>
-          {reviewMode ? 'WIEDERHOLUNG' : 'TRAINING'}
+          {reviewMode ? 'REVIEW' : 'TRAINING'}
         </Text>
         <Text style={styles.counter}>
-          Frage {visibleCounter} von {batchSize}
+          Question {visibleCounter} of {batchSize}
         </Text>
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+        <TouchableOpacity
+          onPress={handleClose}
+          accessibilityRole="button"
+          accessibilityLabel="Save progress and return home"
+          style={styles.closeButton}>
           <AppIcon name="close" size={19} color={Colors.textMuted} />
         </TouchableOpacity>
       </View>
@@ -117,16 +129,16 @@ export const QuestionScreen = () => {
         <View style={[styles.progressFill, { width: `${sessionProgress}%` }]} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.questionCard}>
-          <Text style={styles.questionEyebrow}>DEINE FRAGE</Text>
+          <Text style={styles.questionEyebrow}>YOUR QUESTION</Text>
           <Text variant="titleLarge" style={styles.question}>
             {question.question}
           </Text>
           <Text style={styles.answerHint}>
             {answerCount === 1
-              ? 'Wähle eine Antwort aus.'
-              : `Wähle ${answerCount} Antworten aus.`}
+              ? 'Select one answer.'
+              : `Select ${answerCount} answers.`}
           </Text>
         </View>
 
@@ -145,13 +157,14 @@ export const QuestionScreen = () => {
                 activeOpacity={isDisabled ? 1 : 0.72}
                 style={[styles.optionItem, styles[styleName], shouldDim && styles.optionDisabled]}>
                 <AppIcon
-                  name={isSelected
-                    ? isCorrect ? 'check-circle' : 'close-circle'
-                    : revealed && isCorrect ? 'check-circle' : 'checkbox-blank-outline'}
+                  name={revealed
+                    ? isCorrect ? 'check-circle' : isSelected ? 'close-circle' : 'checkbox-blank-outline'
+                    : isSelected ? 'checkbox-marked-circle' : 'checkbox-blank-outline'}
                   size={24}
                   color={
                     revealed && isCorrect ? Colors.success
-                    : isSelected ? (isCorrect ? Colors.success : Colors.danger)
+                    : revealed && isSelected ? Colors.danger
+                    : isSelected ? Colors.primary
                     : Colors.textMuted
                   }
                 />
@@ -161,15 +174,19 @@ export const QuestionScreen = () => {
           })}
         </View>
 
+        {revealed && !currentAnswerCorrect && <LearningAidCard question={question} />}
+
         <Button
           mode="contained"
           onPress={goNext}
           disabled={selected.length < question.correct.length}
-          icon={({ size, color }) => <AppIcon name="arrow-right" size={size} color={color} />}
+          icon={({ size, color }) => (
+            <AppIcon name={revealed ? 'arrow-right' : 'check'} size={size} color={color} />
+          )}
           style={styles.button}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}>
-          Weiter
+          {revealed ? 'Next' : 'Check answer'}
         </Button>
       </ScrollView>
     </ScreenContainer>
@@ -263,7 +280,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   optionDefault: { backgroundColor: Colors.surface, borderColor: Colors.border },
-  optionCorrect: { backgroundColor: Colors.successSoft, borderColor: '#B9E2CB' },
+  optionSelected: { backgroundColor: Colors.primarySoft, borderColor: '#AFC7F5' },
   optionWrong: { backgroundColor: Colors.dangerSoft, borderColor: '#F3C4C9' },
   optionRevealed: { backgroundColor: Colors.infoSoft, borderColor: '#B8DDE8' },
   optionDisabled: { opacity: 0.45 },

@@ -11,8 +11,13 @@ A mobile learning app to prepare for the **Professional Scrum Developer (PSD I)*
 ## Features
 
 - **336 exam questions** with shuffled answer options on every session
+- **English-first interface** — navigation, status messages, controls, metadata, and PWA language settings are consistently English
 - **Training mode** — work through all questions batch by batch (10 at a time)
+- **Save and exit anytime** — checked answers are saved even before a 10-question batch is complete, and an unchecked question is resumed later
 - **Review mode** — retry only the questions you previously answered incorrectly
+- **Focused answer feedback** — selections stay neutral until they are checked, so the UI does not reveal the solution early
+- **Bilingual learning aids** — incorrect answers reveal the correct answer and a concise German or English takeaway without interrupting successful answers
+- **Official references** — each learning aid links to the Scrum Guide or Scrum.org Software Developer Learning Path for further study
 - **Progress tracking** — persistent progress bar showing how many questions you've completed
 - **Result screen** — summary of correct / incorrect answers after each batch
 - **Cloud sync** — progress is saved to **Firebase Firestore** (anonymous auth) and synced across devices
@@ -126,7 +131,8 @@ npm test
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `src/hooks/__tests__/shuffle.test.ts`            | `shuffle` — length, element preservation, no mutation                                                     |
 | `src/hooks/__tests__/useQuestions.test.ts`       | Question filtering (seen exclusion, < 10 fallback, `pendingQuestion` ordering)                            |
-| `src/hooks/__tests__/useQuestionSession.test.ts` | Option selection, reveal logic, batch accumulation, `markResults` flags, auto-reveal timer, option styles |
+| `src/hooks/__tests__/useQuestionSession.test.ts` | Neutral selection, reveal flow, batch accumulation, partial-session exit snapshots, and option styles     |
+| `src/lib/__tests__/learningAid.test.ts`          | Topic matching, official source selection, and curated explanation overrides                             |
 
 **Stack:** [jest-expo](https://github.com/expo/expo/tree/main/packages/jest-expo) + [@testing-library/react-native](https://testing-library.com/docs/react-native-testing-library/intro/)
 
@@ -189,15 +195,20 @@ This app uses **Expo Router** (file-based routing) with React Native, targeting 
 **Question flow**
 
 1. `useQuestions` loads and filters questions (excludes already-seen ones)
-2. `useQuestionSession` manages the current batch: selection state, reveal logic, result accumulation
-3. After each batch of 10, a `ResultCard` is shown
-4. Incorrect answers are saved; the user can review them from the home screen
+2. `useQuestionSession` manages the current batch: selection state, explicit answer checking, reveal logic, and result accumulation
+3. The first action checks the answer without advancing; selected options remain visually neutral until this point
+4. After an incorrect or incomplete answer, `LearningAidCard` shows the correct answer, a DE/EN topic takeaway, and an official reference; correct answers continue without the extra card
+5. The next action advances; after each batch of 10, a `ResultCard` is shown
+6. Closing early saves every checked answer immediately and returns to the home screen; an unchecked current question is kept for the next session
+7. Incorrect answers are saved; the user can review them from the home screen
 
 **Theming** — shared color and typography tokens live in `src/constants/theme.ts`. The current React Native Paper provider uses a customized `MD3LightTheme`. Montserrat is used for readable learning content, headings, and controls; Roboto Mono is reserved for progress values, counters, and small orientation labels. The visual system favors a near-white background, white cards, subtle borders, restrained blue/cyan accents, and soft semantic colors for correct and incorrect answers.
 
 **Interface flow** — the home screen presents progress and accuracy in a compact status card. Actions follow a mobile-first rule: they use the available safe width on small screens and are centered with a 300 px maximum on larger layouts. Icon-only controls keep at least a 44×44 px touch target. Questions use a clear progress indicator, a focused white question card, and bordered answer cards. The password and result screens use the same spacing, radius, and surface language; secondary result information stays in a narrower centered panel so it does not compete with the score.
 
 **Icons** — `@expo/vector-icons` (MaterialCommunityIcons) is loaded once in the root layout and rendered through the shared `AppIcon` wrapper on web, iOS, and Android. Navigation, answer states, password visibility, actions, and results use the same vector-icon source instead of platform-specific text glyphs or emoji.
+
+**Learning aids** — after an incorrect or incomplete answer, `src/lib/learningAid.ts` assigns a concise bilingual topic explanation and an official reference from the question and answer text. Correct answers receive only the compact success state and can continue immediately. The card defaults to English and lets learners switch the explanation to German. A question can optionally define its own `topic`, `explanation`, and `source`; curated values take precedence over the fallback topic guidance. This lets the question bank gain detailed editorial explanations incrementally without leaving existing questions unsupported.
 
 **App icon** — `assets/images/icon.png` is the opaque 1024×1024 primary icon used by iOS, the web configuration, the splash screen, and the home screen. Android uses the safe-area-padded `adaptive-icon.png`. The PWA build copies correctly sized 192×192, 512×512, maskable, and Apple Touch variants from `assets/images/`.
 

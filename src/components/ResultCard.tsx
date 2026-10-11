@@ -20,8 +20,8 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, is
     ? 'trophy-outline' as const
     : (passed ? 'check-decagram-outline' as const : 'lightbulb-on-outline' as const);
   const message = allCorrect
-    ? 'Perfekt – alles richtig!'
-    : (passed ? 'Starke Runde!' : 'Bleib dran – du schaffst das.');
+    ? 'Perfect — all correct!'
+    : (passed ? 'Strong round!' : "Keep going — you've got this.");
 
   return (
     <View style={styles.container}>
@@ -34,13 +34,13 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, is
           <View style={styles.resultIconBadge}>
             <AppIcon name={resultIcon} size={48} color={Colors.primary} />
           </View>
-          <Text style={styles.eyebrow}>RUNDE ABGESCHLOSSEN</Text>
+          <Text style={styles.eyebrow}>ROUND COMPLETE</Text>
           <Text variant="headlineSmall" style={styles.message}>
             {message}
           </Text>
           <View style={styles.scorePill}>
             <Text style={styles.scoreValue}>{correctCount} / {total}</Text>
-            <Text style={styles.scoreLabel}>richtig beantwortet</Text>
+            <Text style={styles.scoreLabel}>answered correctly</Text>
           </View>
         </View>
 
@@ -49,8 +49,8 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, is
             <View style={styles.infoDot} />
             <Text variant="bodyMedium" style={styles.infoText}>
               {incorrectCount === 1
-                ? 'Eine Antwort für die Wiederholung gespeichert.'
-                : `${incorrectCount} Antworten für die Wiederholung gespeichert.`}
+                ? 'One answer was saved for review.'
+                : `${incorrectCount} answers were saved for review.`}
             </Text>
           </View>
         )}
@@ -68,7 +68,7 @@ export const ResultCard = ({ correctCount, total, incorrectCount, onContinue, is
           style={styles.continueButton}
           contentStyle={styles.continueContent}
           labelStyle={styles.continueLabel}>
-          {isReview ? 'Training beenden' : 'Weiter trainieren'}
+          {isReview ? 'Finish' : 'Continue'}
         </Button>
       </View>
     </View>

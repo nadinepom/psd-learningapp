@@ -29,13 +29,13 @@ console.log('✓ Icons kopiert');
 const manifest = {
   name: 'PSD Learning',
   short_name: 'PSD',
-  description: 'Professional Scrum Developer Lernapp – lerne PSD-Fragen effektiv mit Wiederholung und Lernstandspeicherung.',
+  description: 'Professional Scrum Developer learning app with focused practice, review, and progress tracking.',
   start_url: '/',
   display: 'standalone',
   background_color: '#b2e3f6',
   theme_color: '#b2e3f6',
   orientation: 'portrait',
-  lang: 'de',
+  lang: 'en',
   icons: [
     { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
     { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

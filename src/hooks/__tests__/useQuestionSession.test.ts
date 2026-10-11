@@ -76,10 +76,15 @@ describe('useQuestionSession – canToggleOption', () => {
   });
 });
 
-describe('useQuestionSession – goNext / correct answer flow', () => {
-  it('advances to the next question after a correct answer', () => {
+describe('useQuestionSession – goNext / answer flow', () => {
+  it('reveals feedback before advancing after a correct answer', () => {
     const { result } = renderHook(() => useQuestionSession(defaultParams()));
     act(() => result.current.toggleOption(0)); // correct for Q1
+    act(() => result.current.goNext());
+    expect(result.current.question?.correct).toEqual([0]);
+    expect(result.current.revealed).toBe(true);
+    expect(result.current.currentAnswerCorrect).toBe(true);
+
     act(() => result.current.goNext());
     expect(result.current.question?.correct).toEqual([1]); // now on Q2
   });
@@ -92,6 +97,7 @@ describe('useQuestionSession – goNext / correct answer flow', () => {
     act(() => result.current.toggleOption(0)); // partial correct selection
     act(() => result.current.goNext());
     expect(result.current.revealed).toBe(true);
+    expect(result.current.currentAnswerCorrect).toBe(false);
   });
 
   it('shows the result screen after completing a full batch', () => {
@@ -101,9 +107,11 @@ describe('useQuestionSession – goNext / correct answer flow', () => {
     // Answer Q1 correctly
     act(() => result.current.toggleOption(0));
     act(() => result.current.goNext());
+    act(() => result.current.goNext());
 
     // Answer Q2 correctly → batch of 2 complete → showResult
     act(() => result.current.toggleOption(1));
+    act(() => result.current.goNext());
     act(() => result.current.goNext());
 
     expect(result.current.showResult).toBe(true);
@@ -117,10 +125,11 @@ describe('useQuestionSession – goNext / correct answer flow', () => {
     // Answer Q1 correctly
     act(() => result.current.toggleOption(0));
     act(() => result.current.goNext());
+    act(() => result.current.goNext());
 
-    // Answer Q2 incorrectly — selecting a wrong answer and pressing next immediately
-    // accumulates it as wrong (no intermediate reveal step for wrong answers)
+    // Answer Q2 incorrectly, inspect the feedback, then continue.
     act(() => result.current.toggleOption(0)); // wrong for Q2 (correct is [1])
+    act(() => result.current.goNext());
     act(() => result.current.goNext()); // batch complete → markResults called
 
     const [, results] = markResults.mock.calls[0];
@@ -129,26 +138,54 @@ describe('useQuestionSession – goNext / correct answer flow', () => {
   });
 });
 
-describe('useQuestionSession – auto-reveal timer', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+describe('useQuestionSession – early exit', () => {
+  it('returns completed answers and keeps the current unchecked question pending', () => {
+    const questions = [
+      { ...makeQuestion([0]), question: 'First question' },
+      { ...makeQuestion([1]), question: 'Second question' },
+      { ...makeQuestion([2]), question: 'Third question' },
+    ];
+    const { result } = renderHook(() =>
+      useQuestionSession(defaultParams({ questions, batchSize: 3 }))
+    );
 
-  it('auto-reveals after 1500 ms when all answers are selected but one is wrong', () => {
-    const { result } = renderHook(() => useQuestionSession(defaultParams()));
+    act(() => result.current.toggleOption(0));
+    act(() => result.current.goNext());
+    act(() => result.current.goNext());
 
-    // correct is [0], select [1] (wrong) — fills the single-answer slot
-    act(() => result.current.toggleOption(1));
-    expect(result.current.revealed).toBe(false);
-
-    act(() => jest.advanceTimersByTime(1500));
-    expect(result.current.revealed).toBe(true);
+    expect(result.current.getExitSnapshot()).toEqual({
+      questions: [questions[0]],
+      results: [true],
+      pendingQuestionText: 'Second question',
+    });
   });
 
-  it('does NOT auto-reveal when all selected answers are correct', () => {
-    const { result } = renderHook(() => useQuestionSession(defaultParams()));
-    act(() => result.current.toggleOption(0)); // correct answer
-    act(() => jest.advanceTimersByTime(2000));
-    expect(result.current.revealed).toBe(false);
+  it('includes the current question after its answer has been checked', () => {
+    const questions = [{ ...makeQuestion([0]), question: 'Checked question' }];
+    const { result } = renderHook(() =>
+      useQuestionSession(defaultParams({ questions, batchSize: 2 }))
+    );
+
+    act(() => result.current.toggleOption(1));
+    act(() => result.current.goNext());
+
+    expect(result.current.getExitSnapshot()).toEqual({
+      questions,
+      results: [false],
+      pendingQuestionText: null,
+    });
+  });
+
+  it('does not set a pending training question while reviewing mistakes', () => {
+    const { result } = renderHook(() =>
+      useQuestionSession(defaultParams({ reviewMode: true }))
+    );
+
+    expect(result.current.getExitSnapshot()).toEqual({
+      questions: [],
+      results: [],
+      pendingQuestionText: null,
+    });
   });
 });
 
@@ -158,16 +195,16 @@ describe('useQuestionSession – getOptionStyleName', () => {
     expect(result.current.getOptionStyleName(1)).toBe('optionDefault');
   });
 
-  it('returns optionCorrect for a selected correct answer before reveal', () => {
+  it('keeps a selected correct answer neutral before reveal', () => {
     const { result } = renderHook(() => useQuestionSession(defaultParams()));
     act(() => result.current.toggleOption(0)); // option 0 is correct
-    expect(result.current.getOptionStyleName(0)).toBe('optionCorrect');
+    expect(result.current.getOptionStyleName(0)).toBe('optionSelected');
   });
 
-  it('returns optionWrong for a selected wrong answer before reveal', () => {
+  it('keeps a selected wrong answer neutral before reveal', () => {
     const { result } = renderHook(() => useQuestionSession(defaultParams()));
     act(() => result.current.toggleOption(1)); // option 1 is wrong
-    expect(result.current.getOptionStyleName(1)).toBe('optionWrong');
+    expect(result.current.getOptionStyleName(1)).toBe('optionSelected');
   });
 
   it('returns optionRevealed for the correct options after reveal', () => {

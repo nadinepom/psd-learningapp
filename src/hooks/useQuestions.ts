@@ -8,6 +8,18 @@ export type Question = {
   question: string;
   options: string[];
   correct: number[];
+  topic?: {
+    de: string;
+    en: string;
+  };
+  explanation?: {
+    de: string;
+    en: string;
+  };
+  source?: {
+    label: string;
+    url: string;
+  };
 };
 
 export const shuffle = <T>(array: T[]): T[] => {

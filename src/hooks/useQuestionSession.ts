@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { Question } from '@/hooks/useQuestions';
 
-type MarkResults = (questions: Question[], results: boolean[], isReview?: boolean) => Promise<void>;
+type MarkResults = (
+  questions: Question[],
+  results: boolean[],
+  isReview?: boolean,
+  pendingQuestionText?: string | null
+) => Promise<void>;
 
 type Params = {
   questions: Question[];
@@ -19,25 +24,10 @@ export const useQuestionSession = ({ questions, reviewMode, batchSize, markResul
   const [batchQuestions, setBatchQuestions] = useState<Question[]>([]);
   const [batchResults, setBatchResults] = useState<boolean[]>([]);
   const [showResult, setShowResult] = useState(false);
-  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const question = questions[currentIndex];
   const total = questions.length;
   const visibleCounter = currentIndex - batchStartIndex + 1;
-  const hasWrongAnswer = selected.some((i) => !question?.correct.includes(i));
-
-  useEffect(() => {
-    if (!question) return;
-
-    const allExpectedSelected = selected.length === question.correct.length;
-    if (allExpectedSelected && hasWrongAnswer && !revealed) {
-      revealTimer.current = setTimeout(() => setRevealed(true), 1500);
-    }
-
-    return () => {
-      if (revealTimer.current) clearTimeout(revealTimer.current);
-    };
-  }, [selected, question, hasWrongAnswer, revealed]);
 
   const isAnswerCorrect = () => {
     if (!question) return false;
@@ -52,7 +42,7 @@ export const useQuestionSession = ({ questions, reviewMode, batchSize, markResul
   const goNext = () => {
     if (!question) return;
 
-    if (!revealed && !hasWrongAnswer && !isAnswerCorrect() && selected.length > 0) {
+    if (!revealed && selected.length > 0) {
       setRevealed(true);
       return;
     }
@@ -93,7 +83,21 @@ export const useQuestionSession = ({ questions, reviewMode, batchSize, markResul
     return false;
   };
 
-  const openResult = () => setShowResult(true);
+  const getExitSnapshot = () => {
+    if (revealed && question) {
+      return {
+        questions: [...batchQuestions, question],
+        results: [...batchResults, isAnswerCorrect()],
+        pendingQuestionText: null,
+      };
+    }
+
+    return {
+      questions: [...batchQuestions],
+      results: [...batchResults],
+      pendingQuestionText: !reviewMode ? question?.question ?? null : null,
+    };
+  };
 
   const toggleOption = (index: number) => {
     if (!question) return;
@@ -130,7 +134,7 @@ export const useQuestionSession = ({ questions, reviewMode, batchSize, markResul
     }
 
     if (!selected.includes(index)) return 'optionDefault' as const;
-    return question.correct.includes(index) ? ('optionCorrect' as const) : ('optionWrong' as const);
+    return 'optionSelected' as const;
   };
 
   const shouldDimOption = (index: number) => {
@@ -141,18 +145,21 @@ export const useQuestionSession = ({ questions, reviewMode, batchSize, markResul
     return isDisabled && !(revealed && isCorrect);
   };
 
+  const currentAnswerCorrect = isAnswerCorrect();
+
   return {
     question,
     total,
     visibleCounter,
     selected,
     revealed,
+    currentAnswerCorrect,
     showResult,
     batchQuestions,
     batchResults,
     goNext,
     continueAfterResult,
-    openResult,
+    getExitSnapshot,
     toggleOption,
     canToggleOption,
     getOptionStyleName,

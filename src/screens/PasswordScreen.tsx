@@ -38,14 +38,14 @@ export const PasswordScreen = () => {
           />
         </View>
 
-        <Text style={styles.eyebrow}>WILLKOMMEN ZURÜCK</Text>
-        <Text variant="headlineSmall" style={styles.title}>Dein Lernbereich</Text>
+        <Text style={styles.eyebrow}>WELCOME BACK</Text>
+        <Text variant="headlineSmall" style={styles.title}>Your learning space</Text>
         <Text variant="bodyMedium" style={styles.subtitle}>
-          Gib dein Passwort ein, um dein Training fortzusetzen.
+          Enter your password to continue your training.
         </Text>
 
         <TextInput
-          label="Passwort"
+          label="Password"
           mode="outlined"
           value={password}
           onChangeText={(text) => {
@@ -73,7 +73,7 @@ export const PasswordScreen = () => {
 
         {error && (
           <Text variant="bodySmall" style={styles.errorText}>
-            Falsches Passwort. Bitte versuche es erneut.
+            Incorrect password. Please try again.
           </Text>
         )}
 
@@ -85,7 +85,7 @@ export const PasswordScreen = () => {
           style={styles.button}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}>
-          Entsperren
+          Unlock
         </Button>
       </View>
     </KeyboardAvoidingView>

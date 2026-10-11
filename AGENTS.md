@@ -4,7 +4,7 @@ This file gives coding agents the repository-specific context needed to work saf
 
 ## Project overview
 
-PSD Learning is a German-language practice app for Professional Scrum Developer exam questions. It is an Expo 54 / React Native application for iOS, Android, and static web/PWA builds. Expo Router provides file-based routing, React Native Paper provides the main UI primitives, Montserrat is the primary interface font, and Roboto Mono highlights progress and navigation metadata.
+PSD Learning is an English-language practice app for Professional Scrum Developer exam questions. It is an Expo 54 / React Native application for iOS, Android, and static web/PWA builds. Expo Router provides file-based routing, React Native Paper provides the main UI primitives, Montserrat is the primary interface font, and Roboto Mono highlights progress and navigation metadata. Learning explanations are bilingual and default to English, with German available as an optional in-card translation.
 
 The app has a simple password gate, presents shuffled questions in batches of 10, tracks progress and incorrect answers, supports a review mode, and resumes a paused question. Progress is always stored locally. On web, configured Firebase Anonymous Auth and Firestore add cloud persistence.
 
@@ -35,6 +35,7 @@ Treat `AGENTS.md` and `README.md` as part of every project change. Before finish
 - `app/question.tsx`: `/question` route; renders `QuestionScreen`
 - `src/screens/`: complete home, password, and question screens
 - `src/components/`: shared UI (`AppIcon`, `AppText`, `ResultCard`, `ScreenContainer`)
+- `src/components/LearningAidCard.tsx`: compact bilingual answer explanation and official reference shown after checking
 - `src/context/AuthContext.tsx`: password validation and persisted unlock state
 - `src/context/TrainingContext.tsx`: progress state, review mode, local persistence, and optional Firestore sync
 - `src/hooks/useQuestions.ts`: question type, shuffle logic, unseen-question filtering, and resume ordering
@@ -43,6 +44,7 @@ Treat `AGENTS.md` and `README.md` as part of every project change. Before finish
 - `src/data/questions.json`: runtime question bank; `correct` contains zero-based option indices
 - `src/data/scrum_psd_questions.md`: source/reference material for the question bank
 - `src/lib/firebase.ts`: optional Firebase initialization from public Expo environment variables
+- `src/lib/learningAid.ts`: topic-based DE/EN learning guidance, official references, and curated question overrides
 - `src/constants/theme.ts`: shared color and font constants
 - `assets/images/icon.png`: opaque 1024x1024 primary iOS and general app icon
 - `assets/images/adaptive-icon.png`: transparent, safe-area-padded Android adaptive foreground
@@ -64,7 +66,9 @@ Keep route modules in `app/` thin; application UI and behavior belong under `src
 
 `useQuestions` snapshots its inputs once when a question screen mounts. It filters out seen questions while at least 10 unseen questions remain, otherwise it reshuffles the full bank. A pending question is moved to the front. Preserve this session-level behavior unless the requested change explicitly alters it.
 
-`useQuestionSession` is the core business-logic hook. It limits selections to the number of correct options, distinguishes partial and incorrect answers, reveals answers when appropriate, and persists results at batch boundaries. Normal training uses batches of 10; review mode uses the entire incorrect-question list. Changes here should include or update focused hook tests.
+`useQuestionSession` is the core business-logic hook. It limits selections to the number of correct options, keeps selections visually neutral until the user explicitly checks them, reveals feedback on the first action, and records/advances on the following action. It persists results at batch boundaries. `getExitSnapshot` collects previously completed questions plus the currently revealed question so a user can save and leave before completing a batch; an unchecked regular-training question remains pending for the next session. Normal training uses batches of 10; review mode uses the entire incorrect-question list. Changes here should include or update focused hook tests.
+
+Incorrect or incomplete resolved answers display `LearningAidCard`; correct answers intentionally skip it to keep successful practice fast and uncluttered. `getLearningAid` derives a bilingual topic takeaway and routes to either the official Scrum Guide or Scrum.org Software Developer Learning Path. The card defaults to English and offers German as the optional secondary language. The `Question` type supports optional `topic`, `explanation`, and `source` fields; use those fields for carefully curated question-specific content, while preserving the topic-based fallback for older entries. Do not describe fallback takeaways as question-specific proof.
 
 Question identity and deduplication currently use the question text. Take care when editing question wording because it can affect saved progress, resume state, and the incorrect-question collection.
 
@@ -74,13 +78,15 @@ Question identity and deduplication currently use the question text. Take care w
 
 Cloud persistence is web-only. It signs in anonymously, stores one document at `progress/{uid}`, migrates existing local data for a new cloud user, listens with `onSnapshot`, and still writes locally for offline support. Keep the stored data shape backward-compatible or add an explicit migration when changing it. Preserve the Firestore rule invariant that users can access only their own UID document.
 
+`markResults` accepts an optional pending question text so partial-session answers and resume state are written in one persistence operation. Do not save partial results and then call `pauseTraining` separately: both operations would otherwise derive from the same render snapshot and could overwrite each other.
+
 ### Styling and imports
 
 - Use the `@/` alias for imports from `src/`; it maps to `./src/*`, not the repository root.
 - Reuse theme values and shared components before adding screen-local duplicates.
 - The current Paper provider uses `MD3LightTheme`; do not assume dark mode is implemented merely because `userInterfaceStyle` is `automatic` in `app.json`.
 - Use `MaterialCommunityIcons` through `AppIcon` for interface icons on every platform. The icon font is loaded in `app/_layout.tsx` and works on web, iOS, and Android. Prefer a meaningful library glyph over Unicode symbols, emoji, or screen-specific SVG implementations; verify new glyph names against the installed MaterialCommunityIcons map.
-- Keep user-facing copy in German unless the task explicitly changes the product language.
+- Keep the interface, navigation, feedback, accessibility labels, and app/PWA metadata in English. German is only the optional secondary language inside bilingual learning explanations.
 
 ### Visual design system
 
@@ -104,9 +110,9 @@ The app intentionally continues in local-only mode if Firebase is not configured
 
 ## Testing guidance
 
-Jest uses `jest-expo` and `@testing-library/react-native`. Existing tests intentionally focus on the business-logic hooks rather than Firebase integration or broad UI snapshots. Prefer deterministic hook/component tests, mock time for reveal timers, and avoid depending on shuffled order unless `Math.random` is controlled.
+Jest uses `jest-expo` and `@testing-library/react-native`. Existing tests intentionally focus on the business-logic hooks rather than Firebase integration or broad UI snapshots. Prefer deterministic hook/component tests and avoid depending on shuffled order unless `Math.random` is controlled.
 
-When editing the question bank, validate that every entry has a question string, a non-empty options array, and valid zero-based indices in `correct`.
+When editing the question bank, validate that every entry has a question string, a non-empty options array, and valid zero-based indices in `correct`. Optional learning metadata must provide both `de` and `en` values for `topic` and `explanation`, plus a valid `label` and HTTPS `url` for `source`.
 
 ## Generated and deployment files
 
